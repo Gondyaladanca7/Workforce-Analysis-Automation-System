@@ -2,7 +2,8 @@
 ````markdown
 # 🌟 Workforce Analytics & Employee Management System
 
-![One Piece GIF](assets/onepiece.gif)
+![One Piece GIF](./assets/onepiece.gif)
+
 
 ## 📌 Project Overview
 
