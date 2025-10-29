@@ -12,9 +12,6 @@ from utils import database as db
 # -------------------------
 # Authentication setup
 # -------------------------
-# Only GOVIND user present (no 'aarya' entry)
-# NOTE: For dev convenience we generate GOVIND's hash at runtime from plain "LADU".
-# This is fine for local testing but remove the plain password or move to env vars for production.
 credentials = {"usernames": {}}
 try:
     GOVIND_PLAIN_PASSWORD = "LADU"
@@ -59,10 +56,10 @@ if authentication_status:
     # --- Load data from DB ---
     df = db.fetch_employees()
 
-    # If database is empty and CSV exists, optionally import once (uncomment if needed)
-    # if df.empty:
-    #     db.import_from_csv("data/workforce_data.csv")
-    #     df = db.fetch_employees()
+    # If database is empty and CSV exists, import once
+    if df.empty:
+        db.import_from_csv("data/workforce_data.csv")
+        df = db.fetch_employees()
 
     # --- Sidebar Filters ---
     st.sidebar.header("🔍 Filter Employee Data")
@@ -120,7 +117,7 @@ if authentication_status:
     if sort_col in filtered_search_df.columns:
         filtered_search_df = filtered_search_df.sort_values(by=sort_col, ascending=(ascending_order == "Ascending"))
 
-    # Highlighting: keep table white background & black font; only lightly mark resigned if present
+    # Highlighting: white background & black font; lightly mark resigned if present
     def highlight_rows(row):
         try:
             if 'Status' in row.index and str(row['Status']).strip().lower() == 'resigned':

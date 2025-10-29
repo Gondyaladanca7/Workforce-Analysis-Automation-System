@@ -2,9 +2,6 @@
 import sqlite3
 import pandas as pd
 
-# -------------------------------
-# Database connection
-# -------------------------------
 DB_PATH = "data/workforce.db"
 
 def create_connection():
@@ -12,9 +9,6 @@ def create_connection():
     conn = sqlite3.connect(DB_PATH)
     return conn
 
-# -------------------------------
-# Initialize database
-# -------------------------------
 def initialize_database():
     """Create the employees table if it doesn't exist."""
     conn = create_connection()
@@ -26,6 +20,8 @@ def initialize_database():
             Age INTEGER,
             Gender TEXT,
             Department TEXT,
+            Role TEXT,
+            Skills TEXT,
             Join_Date TEXT,
             Resign_Date TEXT,
             Status TEXT,
@@ -36,12 +32,6 @@ def initialize_database():
     conn.commit()
     conn.close()
 
-# Call to ensure table exists
-initialize_database()
-
-# -------------------------------
-# CRUD Operations
-# -------------------------------
 def fetch_employees():
     """Fetch all employee records as a pandas DataFrame."""
     conn = create_connection()
@@ -50,21 +40,22 @@ def fetch_employees():
     return df
 
 def add_employee(emp):
-    """Add a new employee. emp should be a dict with keys matching column names."""
+    """Insert a new employee record."""
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO employees (Emp_ID, Name, Age, Gender, Department, Join_Date, Resign_Date, Status, Salary, Location)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO employees (Emp_ID, Name, Age, Gender, Department, Role, Skills, Join_Date, Resign_Date, Status, Salary, Location)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         emp['Emp_ID'], emp['Name'], emp['Age'], emp['Gender'], emp['Department'],
-        emp['Join_Date'], emp['Resign_Date'], emp['Status'], emp['Salary'], emp['Location']
+        emp['Role'], emp['Skills'], emp['Join_Date'], emp['Resign_Date'],
+        emp['Status'], emp['Salary'], emp['Location']
     ))
     conn.commit()
     conn.close()
 
 def delete_employee(emp_id):
-    """Delete an employee record by ID."""
+    """Delete an employee by ID."""
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM employees WHERE Emp_ID = ?", (emp_id,))
@@ -72,10 +63,7 @@ def delete_employee(emp_id):
     conn.close()
 
 def update_employee(emp_id, **kwargs):
-    """
-    Update employee details dynamically.
-    Example: update_employee(1, Salary=90000, Status='Resigned')
-    """
+    """Update employee fields dynamically."""
     if not kwargs:
         return
     conn = create_connection()
@@ -86,11 +74,8 @@ def update_employee(emp_id, **kwargs):
     conn.commit()
     conn.close()
 
-# -------------------------------
-# Import/Export Utilities
-# -------------------------------
 def import_from_csv(csv_path="data/workforce_data.csv"):
-    """Import all data from an existing CSV file (run only once)."""
+    """Import data from CSV (run once)."""
     conn = create_connection()
     df = pd.read_csv(csv_path)
     df.to_sql("employees", conn, if_exists="replace", index=False)
@@ -98,6 +83,9 @@ def import_from_csv(csv_path="data/workforce_data.csv"):
     conn.close()
 
 def export_to_csv(csv_path="data/exported_data.csv"):
-    """Export all current employee data to a CSV."""
+    """Export all employee data to CSV."""
     df = fetch_employees()
     df.to_csv(csv_path, index=False)
+
+# Ensure table exists
+initialize_database()

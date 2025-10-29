@@ -1,204 +1,201 @@
-Emp_ID,Name,Age,Gender,Department,Join_Date,Resign_Date,Status,Salary,Location
-2,Rahul,32,Male,Marketing,2019-08-14,,Active,73948,Jaysingpur
-3,Neha,27,Female,IT,2021-05-12,,Active,63512,Kolhapur
-4,Arjun,31,Male,Finance,2018-07-24,,Active,58322,Sangli
-5,Priya,29,Female,HR,2020-11-02,,Active,67823,Shirol
-6,Sachin,34,Male,Sales,2017-09-28,2021-12-10,Resigned,71761,Kolhapur
-7,Divya,26,Female,Marketing,2021-01-18,,Active,52913,Ichalkaranji
-8,Amit,30,Male,IT,2019-06-22,,Active,69471,Jaysingpur
-9,Anjali,28,Female,Finance,2020-02-14,,Active,65947,Shirol
-10,Rohan,33,Male,HR,2018-04-09,,Active,62437,Sangli
-11,Isha,27,Female,Sales,2021-07-03,,Active,53265,Kolhapur
-12,Karan,35,Male,Marketing,2017-10-16,2022-05-21,Resigned,73811,Ichalkaranji
-13,Shreya,29,Female,IT,2019-09-05,,Active,58743,Sangli
-14,Varun,31,Male,Finance,2018-11-30,,Active,74592,Kolhapur
-15,Krishna,30,Male,HR,2019-01-20,,Active,56732,Shirol
-16,Meera,26,Female,Sales,2021-03-12,,Active,48375,Jaysingpur
-17,Aditya,28,Male,Marketing,2020-05-25,,Active,59842,Kolhapur
-18,Ritu,33,Female,IT,2018-06-17,,Active,80311,Sangli
-19,Vikas,29,Male,Finance,2020-09-29,,Active,67239,Ichalkaranji
-20,Naina,27,Female,HR,2021-08-20,,Active,50123,Shirol
-21,Rajat,32,Male,Sales,2019-03-07,,Active,73100,Jaysingpur
-22,Kanika,28,Female,Marketing,2020-12-11,,Active,54100,Kolhapur
-23,Ravi,31,Male,IT,2018-02-23,,Active,79500,Sangli
-24,Pooja,26,Female,Finance,2021-09-14,,Active,56800,Ichalkaranji
-25,Tarun,30,Male,HR,2019-05-02,,Active,61500,Shirol
-26,Ankita,27,Female,Sales,2021-04-09,,Active,48700,Jaysingpur
-27,Yash,33,Male,Marketing,2017-11-15,2022-03-27,Resigned,78200,Kolhapur
-28,Sneha,29,Female,IT,2019-07-08,,Active,65200,Sangli
-29,Manish,31,Male,Finance,2018-10-21,,Active,70100,Shirol
-30,Ruchi,28,Female,HR,2020-01-13,,Active,59300,Ichalkaranji
-31,Vedant,30,Male,Sales,2019-08-18,,Active,66400,Jaysingpur
-32,Tanya,26,Female,Marketing,2021-06-23,,Active,52200,Kolhapur
-33,Kunal,29,Male,IT,2020-03-04,,Active,68800,Sangli
-34,Simran,27,Female,Finance,2021-10-29,,Active,53700,Shirol
-35,Raghav,34,Male,HR,2017-05-17,2021-11-30,Resigned,71500,Ichalkaranji
-36,Aisha,28,Female,Sales,2020-08-26,,Active,56600,Jaysingpur
-37,Harsh,31,Male,Marketing,2019-11-11,,Active,67400,Kolhapur
-38,Neelam,26,Female,IT,2021-02-17,,Active,49800,Sangli
-39,Vivek,30,Male,Finance,2018-12-19,,Active,73800,Shirol
-40,Komal,27,Female,HR,2021-05-08,,Active,51100,Ichalkaranji
-41,Arnav,29,Male,Sales,2020-06-30,,Active,60200,Jaysingpur
-42,Reena,33,Female,Marketing,2018-03-27,,Active,72000,Kolhapur
-43,Saurabh,31,Male,IT,2019-09-16,,Active,68000,Sangli
-44,Nidhi,28,Female,Finance,2020-01-28,,Active,56400,Shirol
-45,Parth,30,Male,HR,2019-06-19,,Active,62700,Ichalkaranji
-46,Payal,27,Female,Sales,2021-07-20,,Active,48900,Jaysingpur
-47,Aryan,32,Male,Marketing,2018-05-12,,Active,71500,Kolhapur
-48,Latika,29,Female,IT,2019-02-25,,Active,55200,Sangli
-49,Ritesh,30,Male,Finance,2020-10-07,,Active,69900,Shirol
-50,Sonali,26,Female,HR,2021-01-30,,Active,53200,Ichalkaranji
-51,Anaya,27,Female,Marketing,2022-08-14,,Active,64200,Kolhapur
-52,Raj,34,Male,Finance,2020-06-23,,Active,75400,Ichalkaranji
-53,Ishita,28,Female,HR,2021-02-09,,Active,58300,Sangli
-54,Arnav,31,Male,Sales,2019-09-18,,Active,68900,Jaysingpur
-55,Meera,29,Female,IT,2020-11-02,,Active,72000,Shirol
-56,Karan,33,Male,Marketing,2018-04-05,,Active,80500,Kolhapur
-57,Priya,26,Female,Finance,2021-07-11,,Active,51500,Sangli
-58,Aryan,30,Male,HR,2019-03-25,,Active,66200,Jaysingpur
-59,Divya,27,Female,Sales,2020-01-19,,Active,57400,Ichalkaranji
-60,Rohan,32,Male,IT,2018-10-14,,Active,78100,Kolhapur
-61,Simran,28,Female,Marketing,2021-05-07,,Active,63300,Sangli
-62,Aditya,31,Male,Finance,2019-06-30,,Active,70500,Shirol
-63,Anjali,29,Female,HR,2020-03-17,,Active,59600,Jaysingpur
-64,Kunal,34,Male,Sales,2017-12-23,2022-07-15,Resigned,79000,Ichalkaranji
-65,Sneha,27,Female,IT,2021-08-04,,Active,56000,Kolhapur
-66,Tarun,30,Male,Marketing,2019-09-29,,Active,64800,Sangli
-67,Nidhi,26,Female,Finance,2020-12-01,,Active,52800,Jaysingpur
-68,Viraj,33,Male,HR,2018-06-18,,Active,73000,Shirol
-69,Shreya,28,Female,Sales,2021-02-26,,Active,54500,Kolhapur
-70,Vivek,31,Male,IT,2019-11-09,,Active,68200,Ichalkaranji
-71,Pooja,27,Female,Marketing,2020-08-13,,Active,60200,Sangli
-72,Sahil,29,Male,Finance,2019-02-21,,Active,65500,Jaysingpur
-73,Isha,25,Female,HR,2021-07-16,,Active,47300,Shirol
-74,Manav,32,Male,Sales,2018-05-12,,Active,71000,Kolhapur
-75,Ritu,28,Female,IT,2020-09-25,,Active,58900,Sangli
-76,Amit,34,Male,Marketing,2017-11-05,2022-09-10,Resigned,77000,Ichalkaranji
-77,Tanya,27,Female,Finance,2021-04-02,,Active,51000,Jaysingpur
-78,Siddharth,30,Male,HR,2019-07-28,,Active,64500,Shirol
-79,Payal,26,Female,Sales,2020-10-18,,Active,53200,Kolhapur
-80,Rajat,31,Male,IT,2018-03-07,,Active,72000,Sangli
-81,Khushi,27,Female,Marketing,2021-05-21,,Active,59800,Jaysingpur
-82,Abhishek,33,Male,Finance,2019-08-09,,Active,69900,Ichalkaranji
-83,Riya,28,Female,HR,2020-02-27,,Active,55500,Sangli
-84,Yuvraj,30,Male,Sales,2019-06-15,,Active,67000,Kolhapur
-85,Anushka,26,Female,IT,2021-09-30,,Active,51200,Jaysingpur
-86,Harsh,31,Male,Marketing,2018-01-19,,Active,75000,Shirol
-87,Kavya,27,Female,Finance,2020-07-23,,Active,54000,Ichalkaranji
-88,Aryan,32,Male,HR,2019-04-12,,Active,68800,Sangli
-89,Neha,26,Female,Sales,2021-03-08,,Active,52700,Kolhapur
-90,Rohit,29,Male,IT,2020-06-11,,Active,60300,Jaysingpur
-91,Sanya,28,Female,Marketing,2019-10-05,,Active,58500,Shirol
-92,Prathamesh,34,Male,Finance,2017-07-27,2022-11-01,Resigned,73200,Kolhapur
-93,Diya,25,Female,HR,2021-01-14,,Active,46800,Sangli
-94,Dev,31,Male,Sales,2019-09-02,,Active,64800,Ichalkaranji
-95,Aarohi,27,Female,IT,2020-04-22,,Active,51100,Shirol
-96,Ritesh,30,Male,Marketing,2018-12-29,,Active,68800,Jaysingpur
-97,Shruti,26,Female,Finance,2021-06-19,,Active,50300,Kolhapur
-98,Armaan,33,Male,HR,2019-03-03,,Active,67200,Sangli
-99,Mahi,28,Female,Sales,2020-08-08,,Active,53700,Ichalkaranji
-100,Shivam,31,Male,IT,2018-09-17,,Active,70500,Jaysingpur
-101,Gokul,30,Male,HR,2023-11-25,2024-02-01,Resigned,84689,Nashik
-102,Lakshay,28,Male,Sales,2020-07-04,,Active,33444,Nashik
-103,Zara,26,Female,Finance,2021-10-21,2025-04-10,Resigned,89073,Pune
-104,Drishya,31,Female,Finance,2021-01-24,,Active,89991,Ichalkaranji
-105,Rhea,32,Female,HR,2019-12-10,,Active,47194,Mumbai
-106,Ivana,37,Female,Sales,2022-03-19,,Active,47523,Mumbai
-107,Mannat,31,Female,Finance,2024-01-22,,Active,84791,Shirol
-108,Purab,36,Male,IT,2023-11-03,2025-05-09,Resigned,51054,Pune
-109,Adira,30,Female,IT,2020-04-20,2025-03-17,Resigned,65072,Nashik
-110,Darshit,24,Male,Sales,2021-11-25,,Active,66547,Pune
-111,Hazel,35,Female,Sales,2023-03-30,2024-02-13,Resigned,34707,Sangli
-112,Yakshit,38,Male,Finance,2020-02-07,,Active,36103,Sangli
-113,Chirag,39,Male,Finance,2019-09-01,,Active,85318,Nashik
-114,Adah,39,Female,Finance,2021-05-05,,Active,77776,Sangli
-115,Sana,36,Female,IT,2023-09-25,,Active,40082,Sangli
-116,Kartik,36,Male,HR,2021-11-13,,Active,51860,Sangli
-117,Nirvaan,36,Male,HR,2024-04-17,2025-06-26,Resigned,40576,Sangli
-118,Reyansh,36,Male,Sales,2023-01-28,,Active,99285,Nashik
-119,Ojas,24,Male,HR,2020-07-05,,Active,38636,Mumbai
-120,Bhamini,38,Female,Finance,2020-02-16,2023-01-16,Resigned,54993,Sangli
-121,Umang,29,Male,HR,2023-01-14,2024-05-14,Resigned,39594,Pune
-122,Bhavin,25,Male,HR,2020-11-06,,Active,67916,Kolhapur
-123,Tara,30,Female,IT,2024-01-01,2025-05-20,Resigned,86270,Sangli
-124,Vivaan,27,Male,Finance,2022-04-18,,Active,96730,Pune
-125,Manjari,29,Female,IT,2022-05-16,,Active,77906,Nashik
-126,Baiju,25,Male,Marketing,2020-09-20,,Active,99376,Ichalkaranji
-127,Inaaya,34,Female,Marketing,2022-06-13,,Active,36232,Nashik
-128,Mahika,26,Female,IT,2019-08-17,,Active,92493,Sangli
-129,Kismat,29,Female,HR,2021-12-03,,Active,84295,Pune
-130,Miraya,27,Female,Finance,2024-05-05,,Active,68793,Mumbai
-131,Siya,29,Female,Marketing,2022-12-05,,Active,61956,Kolhapur
-132,Vanya,29,Female,Marketing,2022-03-22,,Active,48566,Sangli
-133,Advika,24,Female,Marketing,2023-08-13,,Active,96792,Kolhapur
-134,Kiara,29,Female,Marketing,2022-12-08,,Active,97630,Sangli
-135,Miraan,28,Male,Sales,2019-08-04,,Active,83698,Nashik
-136,Yuvraj,26,Male,IT,2022-01-05,2023-08-25,Resigned,56894,Nashik
-137,Anahita,40,Female,Finance,2021-10-08,,Active,93031,Ichalkaranji
-138,Anya,27,Female,HR,2022-11-18,,Active,85920,Mumbai
-139,Neelofar,33,Female,Marketing,2020-12-29,,Active,90251,Kolhapur
-140,Taimur,28,Male,HR,2024-02-15,,Active,58160,Mumbai
-141,Ishita,31,Female,HR,2019-09-16,,Active,95719,Pune
-142,Misha,26,Female,IT,2023-07-07,2024-08-19,Resigned,67497,Mumbai
-143,Divyansh,27,Male,HR,2023-04-06,,Active,59988,Jaysingpur
-144,Abram,31,Male,Marketing,2023-03-01,,Active,66136,Nashik
-145,Ivan,40,Male,Marketing,2023-12-10,,Active,84600,Ichalkaranji
-146,Tiya,36,Female,Marketing,2023-09-14,2024-02-14,Resigned,31398,Nashik
-147,Kavya,35,Female,IT,2020-04-14,,Active,80063,Nashik
-148,Madhav,32,Male,Marketing,2024-02-20,,Active,68700,Mumbai
-149,Prisha,28,Female,Sales,2022-06-10,,Active,73400,Pune
-150,Aayush,33,Male,Sales,2023-01-12,,Active,89000,Mumbai
-152,Amira,30,Female,HR,2022-08-29,,Active,54670,Pune
-153,Dhanuk,32,Male,IT,2021-03-24,,Active,71030,Shirol
-154,Biju,29,Male,Sales,2020-04-29,,Active,53882,Sangli
-155,Mohanlal,36,Male,HR,2019-12-09,,Active,68229,Sangli
-156,Jiya,26,Female,Sales,2023-12-26,,Active,41434,Nashik
-157,Eva,34,Female,Marketing,2020-10-07,,Active,71981,Mumbai
-158,Kiaan,38,Male,IT,2020-06-02,,Active,66273,Mumbai
-159,Anika,28,Female,HR,2020-02-17,,Active,49842,Jaysingpur
-160,Oorja,26,Female,Sales,2020-03-27,,Active,50685,Nashik
-161,Zain,34,Male,Marketing,2021-09-21,,Active,59942,Pune
-162,Samarth,33,Male,Sales,2022-05-29,,Active,65006,Sangli
-163,Damini,25,Female,Sales,2022-06-13,,Active,53921,Ichalkaranji
-164,Vardaniya,30,Female,Sales,2022-08-06,,Active,62846,Nashik
-165,Aaryahi,29,Female,HR,2021-05-20,,Active,51913,Kolhapur
-166,Ranbir,27,Male,Marketing,2022-08-09,,Active,55807,Jaysingpur
-167,Faiyaz,36,Male,Sales,2021-02-05,,Active,68116,Nashik
-168,Neysa,26,Female,HR,2019-12-30,,Active,45611,Mumbai
-169,Keya,34,Female,Sales,2022-07-10,2025-06-13,Resigned,65220,Kolhapur
-170,Rania,28,Female,Sales,2024-06-06,2024-11-12,Resigned,71756,Pune
-171,Samar,31,Male,Sales,2022-03-23,,Active,56745,Sangli
-172,Mamooty,35,Male,HR,2023-11-21,,Active,52079,Ichalkaranji
-173,Indrajit,32,Male,Sales,2020-06-05,,Active,62536,Ichalkaranji
-174,Ira,25,Female,Finance,2023-05-28,,Active,63305,Shirol
-175,Dhanush,27,Male,Marketing,2023-07-29,,Active,47067,Kolhapur
-176,Aayush,30,Male,IT,2021-11-02,,Active,58215,Shirol
-177,Eshani,30,Female,HR,2019-12-26,,Active,69451,Sangli
-178,Seher,28,Female,Sales,2022-08-27,,Active,42398,Sangli
-179,Ritvik,31,Male,Marketing,2022-01-18,,Active,62639,Pune
-180,Hridaan,24,Male,Sales,2020-01-26,,Active,57494,Shirol
-181,Farhan,36,Male,IT,2020-05-18,2025-01-26,Resigned,64290,Mumbai
-182,Aradhya,32,Female,IT,2020-06-11,2024-08-20,Resigned,60624,Pune
-183,Prisha,27,Female,Marketing,2021-02-16,,Active,53115,Ichalkaranji
-184,Kimaya,36,Female,Sales,2023-03-22,,Active,50523,Jaysingpur
-185,Saira,24,Female,IT,2023-04-19,,Active,61872,Pune
-186,Ela,35,Female,Marketing,2022-07-31,,Active,65743,Nashik
-187,Yashvi,24,Female,IT,2020-10-24,,Active,64709,Kolhapur
-188,Aarna,29,Female,HR,2021-10-09,,Active,68402,Shirol
-189,Shanaya,28,Female,HR,2024-03-31,,Active,61225,Kolhapur
-190,Vihaan,28,Male,Marketing,2024-05-04,2025-04-04,Resigned,72202,Nashik
-191,Hansh,29,Male,Sales,2024-04-06,,Active,61241,Mumbai
-192,Elakshi,24,Female,Sales,2022-02-11,,Active,54014,Nashik
-193,Pari,33,Female,HR,2020-07-05,,Active,63114,Shirol
-194,Emir,37,Male,Sales,2022-12-06,,Active,57906,Shirol
-195,Shaan,28,Male,HR,2020-10-27,2021-06-07,Resigned,60936,Sangli
-196,Ryan,37,Male,Sales,2023-12-20,2024-10-11,Resigned,52871,Pune
-197,Charvi,28,Female,IT,2021-11-09,,Active,65427,Sangli
-198,Tanya,24,Female,IT,2024-02-18,,Active,45869,Mumbai
-199,Zaina,37,Female,Finance,2019-08-14,,Active,59649,Jaysingpur
-200,Kaira,35,Female,Marketing,2019-12-22,,Active,67125,Kolhapur
-199,Ojas,22,Male,Finance,2025-08-02,,Active,50000,Pune
-200,Varad,22,Male,Sales,2025-08-01,,Active,50000,Pune
-201,govind lad,23,Male,IT,2016-05-01,,Active,10000009,bawada
-201,gondu,22,Male,HR,2016-05-01,,Active,10000001,bawada chya bajula
-201,gondu,22,Male,HR,2016-05-01,,Active,10000002,gondu chya mage
+Emp_ID,Name,Age,Department,Role,Skills,Join_Date,Resign_Date,Status,Salary,Location
+1,Heather Miller,28,HR,Accountant,Communication;Training,2023-08-07,,Active,58048,South Jon
+2,Brittany Robinson,23,HR,Analyst,Training;Recruitment,2023-08-06,2025-04-27,Resigned,46041,Williamsland
+3,Kyle Howard,31,IT,Analyst,JavaScript;C++,2023-01-27,,Active,105961,West Susan
+4,Yvonne Hicks,28,IT,Analyst,SQL;JavaScript,2025-01-03,,Active,82038,North Whitneybury
+5,Melissa Contreras,24,IT,Accountant,C++;JavaScript,2022-11-25,,Active,99703,East Reginaldtown
+6,Christopher Mcbride,38,HR,Developer,Communication;Training,2021-11-17,,Active,89064,Danielmouth
+7,Courtney Gomez,30,Marketing,Manager,Social Media;Content,2024-12-11,,Active,72393,East Morganborough
+8,Joseph Garcia,31,HR,Manager,Communication;Recruitment,2021-10-04,,Active,72999,Seanborough
+9,Lisa Sawyer,34,HR,Manager,Recruitment;Communication,2022-02-09,,Active,43202,South Karen
+10,Jennifer Lambert,23,Operations,Accountant,Coordination;Planning,2025-06-05,2025-09-13,Resigned,60949,North Michael
+11,Michael Parker,22,HR,Accountant,Recruitment;Training,2022-06-13,,Active,84152,Christensenland
+12,Michael Elliott,22,Operations,Recruiter,Planning;Coordination,2023-10-08,,Active,78372,East Richard
+13,Melvin Owens,36,IT,Analyst,SQL;JavaScript,2022-08-16,,Active,59240,New Robert
+14,David Dean,38,IT,Developer,JavaScript;Java,2023-02-23,,Active,95525,Wendybury
+15,Jennifer Garcia,32,Marketing,Manager,Content;Ads,2020-12-19,,Active,100580,Tracyland
+16,Laura Cole,35,HR,Accountant,Recruitment;Training,2021-03-17,,Active,78065,Murphyshire
+17,William Williams,27,HR,Manager,Recruitment;Communication,2023-10-02,,Active,93464,New Mary
+18,Karen Phillips,33,Marketing,Analyst,Content;Ads,2025-05-16,,Active,74267,Martinfurt
+19,Terry Smith,37,HR,Developer,Recruitment;Training,2022-08-20,,Active,53948,Ashleyfurt
+20,Todd Stein,28,HR,Developer,Communication;Recruitment,2024-11-04,,Active,83469,Russellmouth
+21,Jordan Burns,43,IT,Manager,JavaScript;C++,2025-09-26,,Active,94678,Michaeltown
+22,Julie Keller,23,Marketing,Developer,Social Media;SEO,2022-04-25,,Active,88942,East Pamela
+23,Jessica Cardenas,33,IT,Developer,C++;Java,2024-01-23,,Active,55497,Reynoldsshire
+24,Christina Contreras,29,Finance,Accountant,Accounting;Excel,2022-05-15,,Active,49054,Cannonfurt
+25,Catherine Ayers,34,Finance,Developer,Accounting;Taxation,2024-07-08,,Active,53988,South Shane
+26,Heidi Cherry,41,Marketing,Analyst,Social Media;Content,2024-04-28,,Active,46019,North Matthewburgh
+27,Amy Sims,42,Marketing,Manager,SEO;Content,2024-11-17,,Active,55913,South Andrea
+28,Joseph Gilbert,23,Finance,Accountant,Accounting;Excel,2020-11-22,,Active,61362,West Matthewfurt
+29,Maria Mack,25,IT,Developer,Java;C++,2021-06-26,,Active,44161,Randyfort
+30,Kathryn Fields,39,HR,Manager,Training;Recruitment,2025-01-28,,Active,64870,North Zachary
+31,Shawn Mccullough,34,HR,Manager,Communication;Recruitment,2023-03-09,2025-05-06,Resigned,74004,New Chaseville
+32,Jacob Parker,28,Operations,Accountant,Planning;Coordination,2022-07-26,,Active,109732,Lake Melissa
+33,Justin Thompson,42,Marketing,Recruiter,Social Media;Content,2023-01-29,,Active,51283,Port Jenniferfurt
+34,Jamie Leon,39,IT,Developer,Java;C++,2024-07-11,,Active,69588,Port Christopherview
+35,Jeffrey Walker,37,Marketing,Accountant,Ads;Content,2023-07-12,,Active,107653,Paulaton
+36,Samantha Hoffman,43,Finance,Analyst,Excel;Accounting,2022-09-22,,Active,41192,North Jack
+37,Stephen Crosby,29,Finance,Manager,Excel;Taxation,2021-11-16,,Active,55815,West Kelsey
+38,Gregory Little,27,HR,Recruiter,Recruitment;Training,2025-06-21,,Active,98317,Jasonchester
+39,Michael Nguyen,34,HR,Developer,Communication;Recruitment,2022-02-23,,Active,111072,Robertfort
+40,Michael Garcia,43,Marketing,Accountant,SEO;Content,2025-04-15,,Active,99866,Kellytown
+41,James Shepherd,42,Marketing,Manager,Content;Social Media,2022-05-21,2024-11-15,Resigned,60226,South Kimberlyshire
+42,Michelle Rogers,43,IT,Analyst,SQL;C++,2021-06-27,,Active,111489,South Rebecca
+43,Zachary Garcia,45,Finance,Analyst,Excel;Accounting,2021-03-21,,Active,98996,North Kimberlyview
+44,Stephen Davis,36,HR,Developer,Training;Communication,2024-07-19,2025-06-17,Resigned,63372,West Nicholasmouth
+45,Jeff Meyer,27,HR,Developer,Recruitment;Training,2024-08-08,,Active,100246,Lake Kathleenton
+46,Roger Avila,33,Operations,Accountant,Coordination;Planning,2025-08-31,,Active,100786,New Douglasview
+47,Christopher Garcia,41,Marketing,Developer,SEO;Ads,2023-05-20,,Active,76262,East Elizabeth
+48,John Silva,25,Operations,Analyst,Coordination;Planning,2021-03-01,,Active,113981,Danielshaven
+49,Kimberly King,23,Operations,Manager,Coordination;Planning,2024-05-27,,Active,82175,Willisview
+50,Sheila Johnson,24,HR,Analyst,Training;Communication,2023-06-05,,Active,81329,Watsonton
+51,Eric Moon,22,HR,Accountant,Communication;Training,2021-02-07,,Active,61447,Holmesville
+52,James Young,34,IT,Manager,C++;Java,2023-01-16,,Active,61935,West Jeff
+53,Kyle Olson,25,IT,Developer,JavaScript;Python,2023-09-09,,Active,84973,Robertbury
+54,Robert Ortiz,31,Operations,Accountant,Logistics;Coordination,2024-07-24,,Active,58687,Carlside
+55,Emily Atkinson,35,IT,Developer,C++;Java,2023-02-15,,Active,51019,Timothymouth
+56,Thomas Wise,30,IT,Recruiter,C++;Python,2024-03-04,,Active,88379,South Davidview
+57,Eduardo Berry,22,HR,Manager,Training;Recruitment,2024-06-06,,Active,64321,Lake Phillipshire
+58,Joshua Nelson,37,Marketing,Manager,Social Media;Content,2025-01-05,,Active,74687,Connieview
+59,Nancy Nelson,42,Finance,Manager,Excel;Accounting,2022-09-30,,Active,96993,South Alyssaberg
+60,Elizabeth Jones,31,Finance,Analyst,Accounting;Excel,2023-04-21,2023-09-08,Resigned,116864,Garrisonberg
+61,Kelsey Rogers,23,Operations,Analyst,Coordination;Logistics,2021-01-05,2022-11-26,Resigned,110685,West Kimberly
+62,Ryan Walker,29,IT,Analyst,Python;JavaScript,2024-12-02,,Active,99584,East Amy
+63,Jessica Booth,30,IT,Analyst,SQL;C++,2021-07-03,,Active,108776,New Jennifer
+64,Laura Garcia,41,IT,Manager,SQL;Python,2021-11-09,,Active,105969,Kochland
+65,Tracey Davis DDS,37,Marketing,Accountant,Social Media;Content,2021-06-05,,Active,108676,South Amy
+66,Lauren Stewart,33,Finance,Recruiter,Accounting;Excel,2022-05-20,,Active,47629,South Brandonberg
+67,Samuel Chavez,28,Marketing,Analyst,Ads;Social Media,2024-06-02,,Active,84954,Lake Charles
+68,Sandra Brooks,34,IT,Accountant,Python;JavaScript,2022-03-30,,Active,40474,Seanport
+69,Tamara Taylor,40,Marketing,Developer,Ads;Social Media,2023-08-07,,Active,91447,Phillipport
+70,Angela Lester,22,Marketing,Recruiter,Social Media;Content,2022-01-19,2022-03-11,Resigned,76633,Markston
+71,Emma Alexander,36,IT,Analyst,C++;Java,2025-05-18,,Active,117989,Delgadoville
+72,Joyce Morales,42,Marketing,Manager,Social Media;Content,2022-01-12,2023-04-02,Resigned,106553,Elizabethhaven
+73,Gina Johnson,43,Finance,Accountant,Excel;Accounting,2022-08-26,,Active,93568,Markhaven
+74,Jennifer Adams,32,Marketing,Analyst,SEO;Content,2022-03-28,,Active,98180,Michaelhaven
+75,Dr. Justin Swanson,35,IT,Recruiter,C++;SQL,2023-05-30,,Active,105640,Hebertport
+76,Joseph Gutierrez,43,Finance,Recruiter,Excel;Accounting,2024-08-10,,Active,78084,New Benjamin
+77,Caitlin Gonzalez,36,Finance,Recruiter,Taxation;Accounting,2022-05-23,2024-11-04,Resigned,45319,West Danielfurt
+78,Yolanda Morse,44,Operations,Recruiter,Planning;Logistics,2024-01-20,,Active,95911,Wilsonland
+79,Daniel Jacobs,43,IT,Developer,Python;Java,2023-01-01,2023-01-02,Resigned,73887,West Dylanshire
+80,Eric Jones,26,Finance,Recruiter,Accounting;Taxation,2024-11-17,,Active,70808,East April
+81,Helen Shepherd,27,HR,Accountant,Training;Recruitment,2023-03-16,,Active,95543,South Christopher
+82,Alexander Villanueva,39,Operations,Manager,Planning;Coordination,2023-05-26,,Active,119940,Johnmouth
+83,Mark Cox,35,IT,Analyst,SQL;Python,2021-12-11,,Active,61224,East Marymouth
+84,Janet Chan,33,Marketing,Analyst,SEO;Social Media,2023-03-23,2024-12-22,Resigned,49577,New Katherineton
+85,Vanessa Hill DDS,28,Marketing,Accountant,Social Media;SEO,2025-05-09,,Active,98289,Matthewsland
+86,Mr. Paul Bennett DDS,26,Operations,Recruiter,Coordination;Logistics,2025-05-15,,Active,111045,West Veronicaberg
+87,Amy Contreras,36,HR,Manager,Training;Communication,2024-03-25,2025-04-21,Resigned,115376,Woodhaven
+88,Jose Simmons,35,Finance,Manager,Taxation;Excel,2021-05-05,,Active,90740,Erinberg
+89,Kelly Moreno,41,Finance,Accountant,Taxation;Accounting,2025-02-06,,Active,95695,Garnerborough
+90,Michael Murphy Jr.,39,HR,Analyst,Recruitment;Training,2024-06-15,,Active,107923,Thomasland
+91,Katrina Todd,36,Operations,Manager,Logistics;Coordination,2024-07-11,,Active,115910,Joneschester
+92,Amber Maldonado,45,IT,Analyst,Python;JavaScript,2022-03-28,,Active,43409,Davidshire
+93,Richard Williamson,36,HR,Analyst,Training;Recruitment,2022-08-01,,Active,112690,Michaelchester
+94,Kimberly Adams,28,Marketing,Accountant,Content;Social Media,2024-01-18,,Active,90640,Port Roychester
+95,Scott Price,24,Operations,Manager,Planning;Coordination,2025-08-08,,Active,103711,South Kevinville
+96,Megan Flores,44,Operations,Manager,Logistics;Planning,2025-02-09,,Active,118408,Port Jesseshire
+97,Amber Henry,37,IT,Manager,SQL;Java,2024-06-13,,Active,82228,Lake Michaelastad
+98,Christopher Neal,39,Finance,Manager,Accounting;Taxation,2021-05-02,2023-12-21,Resigned,84058,Port Danielburgh
+99,Sarah Diaz,25,Operations,Developer,Coordination;Logistics,2022-05-12,2024-05-30,Resigned,117192,South Kathleen
+100,Marcus Dillon,31,IT,Developer,Python;C++,2024-08-04,,Active,43638,East Laurenton
+101,Denise Tanner,39,Finance,Developer,Taxation;Excel,2024-09-19,,Active,97976,Stanleystad
+102,Angelica Henderson MD,33,Finance,Accountant,Excel;Accounting,2024-09-16,,Active,49810,Patrickstad
+103,Scott Costa,25,HR,Developer,Communication;Training,2023-11-25,,Active,46594,Williamstown
+104,Sarah Summers,25,Operations,Manager,Planning;Logistics,2021-07-17,,Active,105791,Smithmouth
+105,Amanda Osborn,29,HR,Accountant,Training;Communication,2024-10-15,,Active,101969,Smithfort
+106,Krystal Spence,29,Finance,Recruiter,Accounting;Excel,2025-04-18,,Active,64348,West Martin
+107,Amy Johnston,27,Finance,Analyst,Excel;Accounting,2025-06-21,,Active,112268,New Robert
+108,Beth Miller,27,Marketing,Manager,Content;Ads,2023-04-21,,Active,50260,Quinnville
+109,Brian Poole,33,HR,Accountant,Training;Communication,2021-07-07,,Active,75226,Lake Jessicaview
+110,Sean Richards,31,HR,Recruiter,Recruitment;Communication,2024-01-06,,Active,111396,North Erinmouth
+111,Andres Mcgee,22,Finance,Recruiter,Excel;Accounting,2025-05-16,,Active,88494,Lake Sheliaborough
+112,Jennifer Taylor,33,Operations,Developer,Logistics;Coordination,2022-05-16,,Active,80263,East Jessicaview
+113,Kristine Williams,33,Marketing,Accountant,Social Media;SEO,2024-07-04,,Active,59770,Thompsonfort
+114,Benjamin Byrd,39,IT,Developer,SQL;Java,2025-04-21,,Active,94213,West Nathanielstad
+115,Diamond Larsen,28,Operations,Developer,Logistics;Planning,2024-06-06,,Active,45225,West Dawnmouth
+116,Jessica Mayo,35,IT,Analyst,SQL;Python,2023-09-30,2025-06-25,Resigned,119170,Rileyburgh
+117,Barbara Simpson,23,Operations,Developer,Planning;Logistics,2025-09-27,,Active,83709,East Amandaberg
+118,Jamie Gray MD,36,Operations,Developer,Coordination;Planning,2023-09-27,2025-06-01,Resigned,94401,East Hollyside
+119,Charles Vasquez,28,IT,Analyst,SQL;Java,2022-12-01,2024-09-05,Resigned,115984,Scotthaven
+120,Dean Morgan,35,Marketing,Analyst,SEO;Social Media,2022-07-15,,Active,40812,Anthonyton
+121,Eric Bradshaw,28,Operations,Recruiter,Coordination;Logistics,2025-03-29,,Active,81321,North Micheleport
+122,Keith Bender,40,Finance,Recruiter,Accounting;Excel,2025-08-16,,Active,69129,West Vincent
+123,Melinda Anderson MD,22,Marketing,Analyst,Social Media;SEO,2023-03-26,,Active,79003,Lukeland
+124,John Dawson,23,Marketing,Analyst,SEO;Ads,2024-06-01,,Active,78109,East Tamaramouth
+125,Brenda Rojas,45,Operations,Developer,Coordination;Planning,2023-12-12,,Active,77298,Melaniebury
+126,Elijah Evans,34,HR,Recruiter,Communication;Recruitment,2022-04-03,2025-05-26,Resigned,107090,North Angelica
+127,Jeffery Weaver,28,HR,Recruiter,Recruitment;Communication,2020-11-24,2025-01-31,Resigned,102722,West Kristina
+128,Jason Pollard,24,Finance,Analyst,Excel;Taxation,2023-10-24,2025-10-10,Resigned,81632,Sullivanchester
+129,William Navarro,22,Operations,Developer,Logistics;Coordination,2023-05-27,,Active,79151,Robinsonberg
+130,Stephanie Wallace,39,Operations,Manager,Coordination;Logistics,2025-09-20,,Active,67377,South Jasonberg
+131,Ryan Kirk,31,Marketing,Accountant,Content;Social Media,2021-08-13,,Active,92658,East Ralph
+132,William Molina,38,IT,Analyst,Python;Java,2021-08-28,,Active,44989,Elizabethmouth
+133,Joseph Brady,30,Operations,Developer,Planning;Coordination,2024-06-07,,Active,83648,West Jamesbury
+134,Dr. Michael Lopez,28,HR,Accountant,Recruitment;Communication,2025-01-04,,Active,113352,South Nathan
+135,Stephanie Blackburn,22,Marketing,Analyst,Content;Ads,2025-09-17,,Active,84040,North Deanburgh
+136,Alyssa Lara,32,Finance,Accountant,Accounting;Taxation,2023-11-17,,Active,114614,Stephensport
+137,Gloria Duncan,42,IT,Accountant,SQL;C++,2021-07-29,,Active,81779,Lake Jennifer
+138,Anthony Pennington,22,Operations,Manager,Planning;Coordination,2024-04-07,,Active,112032,Port Michaelmouth
+139,Kayla Lam,27,HR,Analyst,Training;Recruitment,2023-11-30,2024-09-24,Resigned,104422,Estradamouth
+140,Nancy Casey,22,HR,Developer,Communication;Training,2021-06-01,,Active,50981,East Amandahaven
+141,Lisa Peterson,31,Marketing,Analyst,Social Media;SEO,2022-05-28,,Active,112743,North Michael
+142,Joshua Thomas,30,IT,Developer,C++;SQL,2022-07-18,,Active,75959,Mccormickport
+143,Natasha Harris,28,HR,Developer,Recruitment;Communication,2024-12-15,,Active,76569,New Christopherberg
+144,Kelly Graham,38,Marketing,Recruiter,Ads;Content,2022-06-07,2023-08-17,Resigned,44792,Watkinsfort
+145,Susan Lee,31,HR,Accountant,Recruitment;Communication,2022-04-22,,Active,108154,Susanmouth
+146,Jennifer Williams,24,Marketing,Manager,Content;Ads,2023-08-23,,Active,58869,West Scottberg
+147,Deanna Jones,37,Finance,Recruiter,Accounting;Taxation,2022-03-29,,Active,90828,South Jeffreyport
+148,Amy Jordan,42,Marketing,Manager,Social Media;Ads,2025-08-29,2025-09-12,Resigned,62426,Andersonborough
+149,Tara Miller,23,IT,Accountant,C++;Python,2023-04-22,2024-03-04,Resigned,87414,East Angela
+150,Steven Moore,22,Finance,Analyst,Taxation;Excel,2022-07-17,,Active,93558,Martinstad
+151,Nathan Miller,42,Finance,Manager,Excel;Accounting,2021-02-04,,Active,49260,East Jennifer
+152,Cindy Beck,30,Operations,Accountant,Logistics;Coordination,2025-03-17,,Active,114806,Guerrerofort
+153,Kelly Johnson,33,Finance,Recruiter,Accounting;Taxation,2025-02-24,,Active,67355,East Elizabethborough
+154,Rebecca Jackson,37,Finance,Recruiter,Taxation;Accounting,2022-11-19,,Active,107173,Johnsonport
+155,John Drake,45,Operations,Analyst,Coordination;Planning,2022-02-18,,Active,88916,Michelleshire
+156,John Hall,34,IT,Analyst,Java;Python,2025-09-10,,Active,96233,Fuenteston
+157,Andrew Lewis,44,Operations,Manager,Coordination;Logistics,2024-03-02,,Active,51006,South James
+158,Kenneth Welch,23,HR,Developer,Recruitment;Training,2021-04-28,,Active,56498,Masseyshire
+159,Rebecca Mckay,22,Marketing,Manager,Ads;SEO,2021-06-27,,Active,92127,East Michaelfurt
+160,Elizabeth Baker,35,Operations,Analyst,Planning;Coordination,2020-12-26,2024-12-23,Resigned,102732,West Andreaville
+161,Tammy Morgan,41,Finance,Manager,Taxation;Accounting,2021-10-15,2023-11-10,Resigned,85411,West Shelby
+162,Timothy White,29,Marketing,Analyst,Ads;SEO,2021-10-31,,Active,89571,Rossfurt
+163,Matthew Krause,45,HR,Recruiter,Training;Communication,2021-05-06,2024-05-11,Resigned,86338,Elizabethbury
+164,Christine Smith,22,Marketing,Analyst,Social Media;SEO,2023-11-17,2024-06-02,Resigned,89764,New Nancy
+165,Dennis Cook,33,Operations,Analyst,Planning;Coordination,2021-12-23,2022-04-11,Resigned,62087,East Matthewtown
+166,Robert Nielsen,43,Operations,Accountant,Coordination;Logistics,2025-10-13,2025-10-25,Resigned,43400,East Jamie
+167,David Mcguire,26,Marketing,Accountant,Content;Social Media,2025-02-04,,Active,71382,Lake Samantha
+168,Kelly Barton,25,IT,Recruiter,Python;JavaScript,2025-10-23,,Active,66095,South Jesse
+169,Sharon Miller,39,HR,Recruiter,Communication;Training,2024-01-19,2024-09-14,Resigned,80196,East Elizabeth
+170,Julia Clay,33,Finance,Developer,Excel;Accounting,2022-04-28,,Active,82114,South Christina
+171,Jason Johnson,23,Operations,Manager,Coordination;Logistics,2021-10-20,,Active,57092,North Amy
+172,Dillon Harris,30,Operations,Developer,Coordination;Planning,2022-09-12,,Active,72064,South Kimberly
+173,Alexis Reeves,25,Operations,Recruiter,Coordination;Logistics,2022-08-25,2023-01-27,Resigned,102413,Adammouth
+174,Linda Salazar,44,IT,Developer,Java;C++,2024-04-25,,Active,111739,Stephenfort
+175,Matthew Bell,23,Operations,Accountant,Coordination;Logistics,2020-12-27,,Active,49730,Nathanielmouth
+176,Jason Wilson,42,Operations,Analyst,Coordination;Logistics,2023-02-26,,Active,101840,North Steventown
+177,Brandy Bryant,44,Marketing,Accountant,SEO;Content,2024-08-29,,Active,81080,Lopezland
+178,Patrick Eaton,26,Operations,Developer,Coordination;Planning,2023-05-18,2025-03-06,Resigned,51814,Thomasfort
+179,Michael Barnes,39,Operations,Analyst,Coordination;Planning,2021-01-19,,Active,99050,Mooneyview
+180,Angela Hutchinson,26,Finance,Recruiter,Excel;Accounting,2022-07-07,,Active,81148,West Mariaport
+181,Veronica Winters,43,Operations,Recruiter,Coordination;Planning,2022-12-19,,Active,60465,Deckerview
+182,William Hobbs,32,IT,Analyst,C++;JavaScript,2025-08-20,,Active,48218,Julieshire
+183,Shaun Brown,36,Operations,Accountant,Coordination;Planning,2022-10-14,,Active,65572,East Oscarmouth
+184,Elizabeth Smith,41,Operations,Analyst,Coordination;Logistics,2021-07-16,,Active,86577,Mcclainburgh
+185,Hayley Everett,24,Marketing,Manager,SEO;Content,2023-01-17,,Active,92437,Danielton
+186,Raymond Patterson,36,Finance,Accountant,Accounting;Excel,2022-07-01,,Active,74131,Smithville
+187,Randy Walsh,25,Finance,Developer,Accounting;Taxation,2024-08-10,,Active,72349,Frankland
+188,Eric Williams,30,Finance,Accountant,Accounting;Excel,2023-01-05,,Active,41131,Thomaschester
+189,Craig Bennett,23,IT,Accountant,Java;Python,2022-12-03,2024-07-12,Resigned,62990,New Donald
+190,Jeremy Reyes,27,IT,Manager,Python;C++,2024-05-21,,Active,91001,North Jennifer
+191,Tammy Bright,23,IT,Manager,C++;Java,2023-12-12,,Active,110712,Riverabury
+192,James Adams,39,HR,Analyst,Recruitment;Training,2023-10-16,2024-05-18,Resigned,108097,Lake Marybury
+193,Michael Brown,30,Finance,Accountant,Accounting;Excel,2022-09-27,,Active,86721,Port Lauren
+194,Amy Simmons,28,Finance,Manager,Taxation;Excel,2022-09-25,,Active,109478,Jonathanmouth
+195,Sherry Hawkins,36,Operations,Analyst,Coordination;Planning,2021-01-30,,Active,64362,Aliciahaven
+196,Jessica Phillips,37,Finance,Recruiter,Taxation;Excel,2025-02-24,,Active,92912,Nancyland
+197,Brian White MD,45,IT,Recruiter,C++;Python,2021-09-10,2022-11-04,Resigned,78215,West Crystalside
+198,Daniel Delacruz,42,IT,Analyst,C++;Java,2024-11-22,,Active,90578,Sosamouth
+199,Sylvia Hale,37,Operations,Developer,Logistics;Coordination,2022-04-20,,Active,93971,Tylermouth
+200,Casey Baxter,33,IT,Developer,JavaScript;Python,2021-04-30,,Active,118730,Leachmouth
