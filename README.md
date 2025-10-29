@@ -2,7 +2,7 @@
 ````markdown
 # 🌟 Workforce Analytics & Employee Management System
 
-![One Piece GIF](https://media.tenor.com/22321304.gif)
+![One Piece GIF](assets/onepiece.gif)
 
 ## 📌 Project Overview
 
