@@ -8,6 +8,8 @@ import datetime
 from utils.pdf_export import generate_summary_pdf
 from utils.analytics import *
 from utils import database as db
+import random
+from faker import Faker
 
 # -------------------------
 # Authentication setup
@@ -25,7 +27,6 @@ except Exception as e:
     st.error("Error generating GOVIND's password hash.")
     st.exception(e)
 
-# Authenticator
 authenticator = stauth.Authenticate(
     credentials=credentials,
     cookie_name='workforce_dashboard',
@@ -33,7 +34,9 @@ authenticator = stauth.Authenticate(
     cookie_expiry_days=1
 )
 
+# -------------------------
 # Login form
+# -------------------------
 name, authentication_status, username = authenticator.login(form_name='Login', location='main')
 if authentication_status:
     st.success(f"Welcome {name}")
@@ -56,10 +59,28 @@ if authentication_status:
     # --- Load data from DB ---
     df = db.fetch_employees()
 
-    # If database is empty and CSV exists, import once
-    if df.empty:
-        db.import_from_csv("data/workforce_data.csv")
-        df = db.fetch_employees()
+    # --- CSV Upload (optional) ---
+    st.sidebar.header("📁 Import Employee Data from CSV")
+    uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
+    if uploaded_file:
+        try:
+            df_uploaded = pd.read_csv(uploaded_file)
+            required_cols = ["Emp_ID","Name","Age","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"]
+            if all(col in df_uploaded.columns for col in required_cols):
+                existing_ids = set(df['Emp_ID'].tolist()) if not df.empty else set()
+                for _, row in df_uploaded.iterrows():
+                    row_dict = row.to_dict()
+                    if row_dict['Emp_ID'] in existing_ids:
+                        row_dict['Emp_ID'] = max(existing_ids) + 1
+                    db.add_employee(row_dict)
+                    existing_ids.add(row_dict['Emp_ID'])
+                st.success("CSV uploaded successfully and added to database!")
+                st.experimental_rerun()
+            else:
+                st.error(f"CSV is missing required columns. Must include: {required_cols}")
+        except Exception as e:
+            st.error("Failed to process CSV")
+            st.exception(e)
 
     # --- Sidebar Filters ---
     st.sidebar.header("🔍 Filter Employee Data")
@@ -93,39 +114,29 @@ if authentication_status:
 
     # --- Employee Table: Search, Sort, Highlight, Delete ---
     st.header("1️⃣ Raw Employee Data")
-
     search_term = st.text_input("Search by Name, ID, Skills, or Role").strip()
     filtered_search_df = filtered_df.copy()
     if search_term:
         cond = pd.Series([False]*len(filtered_search_df), index=filtered_search_df.index)
-        if 'Name' in filtered_search_df.columns:
-            cond = cond | filtered_search_df['Name'].astype(str).str.contains(search_term, case=False, na=False)
-        if 'Emp_ID' in filtered_search_df.columns:
-            cond = cond | filtered_search_df['Emp_ID'].astype(str).str.contains(search_term, na=False)
-        if 'Skills' in filtered_search_df.columns:
-            cond = cond | filtered_search_df['Skills'].astype(str).str.contains(search_term, case=False, na=False)
-        if 'Role' in filtered_search_df.columns:
-            cond = cond | filtered_search_df['Role'].astype(str).str.contains(search_term, case=False, na=False)
+        for col in ['Name','Emp_ID','Skills','Role']:
+            if col in filtered_search_df.columns:
+                cond = cond | filtered_search_df[col].astype(str).str.contains(search_term, case=False, na=False)
         filtered_search_df = filtered_search_df[cond]
 
-    # Sorting options: only show columns that exist
-    sort_options = [c for c in ["Emp_ID", "Name", "Age", "Salary", "Join_Date", "Department", "Role", "Skills"] if c in filtered_search_df.columns]
+    # Sorting
+    sort_options = [c for c in ["Emp_ID","Name","Age","Salary","Join_Date","Department","Role","Skills"] if c in filtered_search_df.columns]
     if not sort_options:
         sort_options = filtered_search_df.columns.tolist()
     sort_col = st.selectbox("Sort by", options=sort_options, index=0)
-    ascending_order = st.radio("Order", ["Ascending", "Descending"], horizontal=True)
+    ascending_order = st.radio("Order", ["Ascending","Descending"], horizontal=True)
     if sort_col in filtered_search_df.columns:
-        filtered_search_df = filtered_search_df.sort_values(by=sort_col, ascending=(ascending_order == "Ascending"))
+        filtered_search_df = filtered_search_df.sort_values(by=sort_col, ascending=(ascending_order=="Ascending"))
 
-    # Highlighting: white background & black font; lightly mark resigned if present
+    # Highlight resigned
     def highlight_rows(row):
-        try:
-            if 'Status' in row.index and str(row['Status']).strip().lower() == 'resigned':
-                return ['background-color: #ffecec; color: black'] * len(row)
-        except:
-            pass
-        return ['background-color: white; color: black'] * len(row)
-
+        if 'Status' in row.index and str(row['Status']).strip().lower() == 'resigned':
+            return ['background-color: #ffecec; color: black']*len(row)
+        return ['background-color: white; color: black']*len(row)
     styled_df = filtered_search_df.style.apply(highlight_rows, axis=1)
 
     # Delete employee
@@ -144,6 +155,50 @@ if authentication_status:
             st.exception(e)
 
     st.dataframe(styled_df, height=420)
+
+    # --- Edit Employee ---
+    st.sidebar.header("✏️ Edit Employee")
+    edit_id = st.sidebar.number_input("Enter Employee ID to edit", step=1, format="%d")
+    if st.sidebar.button("Load Employee Data"):
+        if 'Emp_ID' in df.columns and edit_id in df['Emp_ID'].values:
+            emp_data = df[df['Emp_ID']==edit_id].iloc[0].to_dict()
+            with st.sidebar.form(f"edit_employee_form_{edit_id}"):
+                emp_name = st.text_input("Name", value=emp_data['Name'])
+                age = st.number_input("Age", step=1, value=int(emp_data['Age']))
+                gender_val = st.selectbox("Gender", ["Male","Female"], index=0 if emp_data.get('Gender','Male')=='Male' else 1)
+                department = st.text_input("Department", value=emp_data.get('Department',''))
+                role = st.text_input("Role", value=emp_data.get('Role',''))
+                skills = st.text_input("Skills", value=emp_data.get('Skills',''))
+                join_date = st.date_input("Join Date", value=pd.to_datetime(emp_data['Join_Date']))
+                status = st.selectbox("Status", ["Active","Resigned"], index=0 if emp_data.get('Status','Active')=='Active' else 1)
+                resign_date = st.date_input("Resign Date", value=pd.to_datetime(emp_data['Resign_Date']) if emp_data.get('Resign_Date') else datetime.date.today())
+                salary = st.number_input("Salary", step=1000, value=float(emp_data.get('Salary',0)))
+                location = st.text_input("Location", value=emp_data.get('Location',''))
+
+                submit_edit = st.form_submit_button("Update Employee")
+                if submit_edit:
+                    updated_row = {
+                        'Name': emp_name,
+                        'Age': int(age),
+                        'Gender': gender_val,
+                        'Department': department,
+                        'Role': role,
+                        'Skills': skills,
+                        'Join_Date': str(join_date),
+                        'Resign_Date': str(resign_date) if status=="Resigned" else "",
+                        'Status': status,
+                        'Salary': float(salary),
+                        'Location': location
+                    }
+                    try:
+                        db.update_employee(edit_id, **updated_row)
+                        st.success(f"Employee ID {edit_id} updated successfully!")
+                        st.experimental_rerun()
+                    except Exception as e:
+                        st.error("Failed to update employee.")
+                        st.exception(e)
+        else:
+            st.sidebar.warning(f"No employee found with ID {edit_id}")
 
     # --- Summary Section ---
     st.header("2️⃣ Summary")
@@ -196,15 +251,15 @@ if authentication_status:
         emp_id = st.number_input("Employee ID", step=1, format="%d")
         emp_name = st.text_input("Name")
         age = st.number_input("Age", step=1, format="%d")
-        gender_val = st.selectbox("Gender", ["Male", "Female"]) if 'Gender' in df.columns else st.text_input("Gender")
+        gender_val = st.selectbox("Gender", ["Male","Female"]) if 'Gender' in df.columns else st.text_input("Gender")
         department = st.selectbox("Department", sorted(df['Department'].dropna().unique().tolist())) if 'Department' in df.columns else st.text_input("Department")
         role = st.text_input("Role")
         skills = st.text_input("Skills")
         join_date = st.date_input("Join Date")
-        status = st.selectbox("Status", ["Active", "Resigned"])
+        status = st.selectbox("Status", ["Active","Resigned"])
         resign_date = st.date_input("Resign Date (if resigned)")
-        if status == "Active":
-            resign_date = ""
+        if status=="Active":
+            resign_date=""
         salary = st.number_input("Salary", step=1000, format="%d")
         location = st.text_input("Location")
 
@@ -219,7 +274,7 @@ if authentication_status:
                 'Role': role,
                 'Skills': skills,
                 'Join_Date': str(join_date),
-                'Resign_Date': str(resign_date) if status == "Resigned" else "",
+                'Resign_Date': str(resign_date) if status=="Resigned" else "",
                 'Status': status,
                 'Salary': float(salary),
                 'Location': location
