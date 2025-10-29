@@ -199,3 +199,6 @@ Emp_ID,Name,Age,Gender,Department,Join_Date,Resign_Date,Status,Salary,Location
 200,Kaira,35,Female,Marketing,2019-12-22,,Active,67125,Kolhapur
 199,Ojas,22,Male,Finance,2025-08-02,,Active,50000,Pune
 200,Varad,22,Male,Sales,2025-08-01,,Active,50000,Pune
+201,govind lad,23,Male,IT,2016-05-01,,Active,10000009,bawada
+201,gondu,22,Male,HR,2016-05-01,,Active,10000001,bawada chya bajula
+201,gondu,22,Male,HR,2016-05-01,,Active,10000002,gondu chya mage
