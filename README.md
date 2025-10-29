@@ -1,5 +1,7 @@
 # 🌟 Workforce Analytics & Employee Management System
 
+![One Piece GIF](https://media.tenor.com/22321304.gif)
+
 ## 📌 Project Overview
 
 The **Workforce Analytics & Employee Management System** is a modern, interactive solution for managing employee records, analyzing workforce data in real-time, and generating professional reports.
