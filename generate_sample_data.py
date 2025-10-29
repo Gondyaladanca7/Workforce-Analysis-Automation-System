@@ -1,19 +1,17 @@
 # generate_sample_data.py
-# Generates 200 sample employee records for testing the Workforce Analytics System.
-# Saves the data as data/workforce_data.csv
+# Generates 200 sample employee records for testing the Workforce Analytics System
 
 import pandas as pd
 import random
 from faker import Faker
+from utils import database as db
 
-# Initialize Faker for random names, cities, and dates
+# Initialize Faker
 fake = Faker()
 
-# Possible departments and roles
+# Departments, roles, and skills mapping
 departments = ["IT", "HR", "Finance", "Marketing", "Operations"]
 roles = ["Developer", "Analyst", "Manager", "Recruiter", "Accountant"]
-
-# Skills mapped by department
 skills_dict = {
     "IT": ["Python", "Java", "SQL", "C++", "JavaScript"],
     "HR": ["Recruitment", "Communication", "Training"],
@@ -22,30 +20,48 @@ skills_dict = {
     "Operations": ["Logistics", "Planning", "Coordination"]
 }
 
+# Fetch existing employee IDs to avoid duplicates
+db.initialize_database()
+existing_ids = set(db.fetch_employees()['Emp_ID'].tolist()) if not db.fetch_employees().empty else set()
+
 data = []
 
-# Generate 200 employee records
-for emp_id in range(1, 201):
+for _ in range(200):
+    emp_id = max(existing_ids) + 1 if existing_ids else 1
+    existing_ids.add(emp_id)
+
     dept = random.choice(departments)
     role = random.choice(roles)
-    skills = ";".join(random.sample(skills_dict.get(dept, ["General"]), k=2))  # pick 2 random skills
+    skills = ";".join(random.sample(skills_dict.get(dept, ["General"]), k=2))
     name = fake.name()
     age = random.randint(22, 45)
-    join_date = fake.date_between(start_date='-5y', end_date='today')  # joined in last 5 years
-    status = random.choice(["Active"]*8 + ["Resigned"]*2)  # ~20% resigned
+    gender = random.choice(["Male", "Female"])
+    join_date = fake.date_between(start_date='-5y', end_date='today')
+    status = random.choice(["Active"]*8 + ["Resigned"]*2)
     resign_date = fake.date_between(start_date=join_date, end_date='today') if status=="Resigned" else ""
     salary = random.randint(40000, 120000)
     location = fake.city()
+
+    row = {
+        'Emp_ID': emp_id,
+        'Name': name,
+        'Age': age,
+        'Gender': gender,
+        'Department': dept,
+        'Role': role,
+        'Skills': skills,
+        'Join_Date': str(join_date),
+        'Resign_Date': str(resign_date),
+        'Status': status,
+        'Salary': float(salary),
+        'Location': location
+    }
     
-    data.append([emp_id, name, age, dept, role, skills, join_date, resign_date, status, salary, location])
+    data.append(row)
+    db.add_employee(row)
 
-# Convert list to pandas DataFrame
-df = pd.DataFrame(
-    data, 
-    columns=["Emp_ID","Name","Age","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"]
-)
-
-# Save CSV file in data/ folder
+# Optional: save to CSV
+df = pd.DataFrame(data)
 df.to_csv("data/workforce_data.csv", index=False)
 
-print("✅ 200 sample employees generated at data/workforce_data.csv")
+print("✅ 200 sample employees generated and added to database & saved at data/workforce_data.csv")

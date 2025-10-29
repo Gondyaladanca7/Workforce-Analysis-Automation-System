@@ -59,25 +59,28 @@ if authentication_status:
     # --- Load data from DB ---
     df = db.fetch_employees()
 
-    # --- CSV Upload (optional) ---
+    # --- CSV Upload (optional, robust) ---
     st.sidebar.header("📁 Import Employee Data from CSV")
     uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
     if uploaded_file:
         try:
             df_uploaded = pd.read_csv(uploaded_file)
-            required_cols = ["Emp_ID","Name","Age","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"]
-            if all(col in df_uploaded.columns for col in required_cols):
-                existing_ids = set(df['Emp_ID'].tolist()) if not df.empty else set()
-                for _, row in df_uploaded.iterrows():
-                    row_dict = row.to_dict()
-                    if row_dict['Emp_ID'] in existing_ids:
-                        row_dict['Emp_ID'] = max(existing_ids) + 1
-                    db.add_employee(row_dict)
-                    existing_ids.add(row_dict['Emp_ID'])
-                st.success("CSV uploaded successfully and added to database!")
-                st.experimental_rerun()
-            else:
-                st.error(f"CSV is missing required columns. Must include: {required_cols}")
+            # Ensure all required columns exist
+            required_cols = ["Emp_ID","Name","Age","Gender","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"]
+            for col in required_cols:
+                if col not in df_uploaded.columns:
+                    df_uploaded[col] = "NA" if df_uploaded[col].dtype == object else 0
+
+            existing_ids = set(df['Emp_ID'].tolist()) if not df.empty else set()
+            for _, row in df_uploaded.iterrows():
+                row_dict = row.to_dict()
+                if row_dict['Emp_ID'] in existing_ids:
+                    row_dict['Emp_ID'] = max(existing_ids) + 1
+                db.add_employee(row_dict)
+                existing_ids.add(row_dict['Emp_ID'])
+
+            st.success("CSV uploaded successfully and added to database!")
+            st.experimental_rerun()
         except Exception as e:
             st.error("Failed to process CSV")
             st.exception(e)
@@ -155,50 +158,6 @@ if authentication_status:
             st.exception(e)
 
     st.dataframe(styled_df, height=420)
-
-    # --- Edit Employee ---
-    st.sidebar.header("✏️ Edit Employee")
-    edit_id = st.sidebar.number_input("Enter Employee ID to edit", step=1, format="%d")
-    if st.sidebar.button("Load Employee Data"):
-        if 'Emp_ID' in df.columns and edit_id in df['Emp_ID'].values:
-            emp_data = df[df['Emp_ID']==edit_id].iloc[0].to_dict()
-            with st.sidebar.form(f"edit_employee_form_{edit_id}"):
-                emp_name = st.text_input("Name", value=emp_data['Name'])
-                age = st.number_input("Age", step=1, value=int(emp_data['Age']))
-                gender_val = st.selectbox("Gender", ["Male","Female"], index=0 if emp_data.get('Gender','Male')=='Male' else 1)
-                department = st.text_input("Department", value=emp_data.get('Department',''))
-                role = st.text_input("Role", value=emp_data.get('Role',''))
-                skills = st.text_input("Skills", value=emp_data.get('Skills',''))
-                join_date = st.date_input("Join Date", value=pd.to_datetime(emp_data['Join_Date']))
-                status = st.selectbox("Status", ["Active","Resigned"], index=0 if emp_data.get('Status','Active')=='Active' else 1)
-                resign_date = st.date_input("Resign Date", value=pd.to_datetime(emp_data['Resign_Date']) if emp_data.get('Resign_Date') else datetime.date.today())
-                salary = st.number_input("Salary", step=1000, value=float(emp_data.get('Salary',0)))
-                location = st.text_input("Location", value=emp_data.get('Location',''))
-
-                submit_edit = st.form_submit_button("Update Employee")
-                if submit_edit:
-                    updated_row = {
-                        'Name': emp_name,
-                        'Age': int(age),
-                        'Gender': gender_val,
-                        'Department': department,
-                        'Role': role,
-                        'Skills': skills,
-                        'Join_Date': str(join_date),
-                        'Resign_Date': str(resign_date) if status=="Resigned" else "",
-                        'Status': status,
-                        'Salary': float(salary),
-                        'Location': location
-                    }
-                    try:
-                        db.update_employee(edit_id, **updated_row)
-                        st.success(f"Employee ID {edit_id} updated successfully!")
-                        st.experimental_rerun()
-                    except Exception as e:
-                        st.error("Failed to update employee.")
-                        st.exception(e)
-        else:
-            st.sidebar.warning(f"No employee found with ID {edit_id}")
 
     # --- Summary Section ---
     st.header("2️⃣ Summary")
