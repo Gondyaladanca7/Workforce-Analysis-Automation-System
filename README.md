@@ -1,9 +1,7 @@
 
-````markdown
 # 🌟 Workforce Analytics & Employee Management System
 
 ![One Piece GIF](./assets/onepiece.gif)
-
 
 ## 📌 Project Overview
 
@@ -88,6 +86,7 @@ workforce-project/
 ├─ requirements.txt           # Python dependencies
 ├─ utils/                     # Helper functions (PDF export, analytics, database)
 ├─ data/                      # CSV and SQLite database files
+├─ assets/                    # Images and GIFs
 ├─ tests/                     # Unit & integration test cases
 └─ README.md                  # Project documentation
 ```
@@ -110,5 +109,4 @@ workforce-project/
 3. Run `streamlit run app.py`.
 4. Use the sidebar to add employees, upload CSV, and explore analytics.
 
-```
-
+-------
