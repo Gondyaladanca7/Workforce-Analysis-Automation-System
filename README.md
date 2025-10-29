@@ -1,3 +1,5 @@
+
+````markdown
 # 🌟 Workforce Analytics & Employee Management System
 
 ![One Piece GIF](https://media.tenor.com/22321304.gif)
@@ -12,12 +14,11 @@ It combines **employee management**, **analytics dashboards**, and **role-based 
 
 ## 🔑 Key Features
 
-* **Role-Based Login**: Secure access for Admin (only for now), HR, and Employee roles.
+* **Role-Based Login**: Secure access for Admin (currently implemented), HR, and Employee roles.
 * **Employee Management**: Add, edit, delete, and search employee records with ease.
 * **CSV Upload & Import**: Bulk import employee data from CSV files safely, with automatic handling of missing columns.
 * **Filters & Sorting**: Filter employees by Department, Role, Status, Gender, Skills; search and sort by multiple criteria.
 * **Interactive Analytics**:
-
   * Total employees summary
   * Department-wise employee count
   * Gender ratio visualization
@@ -34,7 +35,7 @@ It combines **employee management**, **analytics dashboards**, and **role-based 
 ```bash
 git clone <your-repo-link>
 cd workforce-project
-```
+````
 
 2. **Install Dependencies**
 
@@ -58,7 +59,7 @@ python generate_sample_data.py
 
 ## 📝 Assumptions & Design Choices
 
-* **Predefined User Roles**: Admin is implemented; HR and Employee roles can be extended.
+* **Predefined User Roles**: Admin implemented; HR and Employee roles can be extended.
 * **Interactive UI**: Built using Streamlit for an intuitive experience.
 * **Data Storage**: SQLite database (`workforce.db`) with optional CSV imports.
 * **Robust Error Handling**: Missing columns, invalid data, and ID collisions are automatically handled.
@@ -108,5 +109,5 @@ workforce-project/
 3. Run `streamlit run app.py`.
 4. Use the sidebar to add employees, upload CSV, and explore analytics.
 
----
+```
 
