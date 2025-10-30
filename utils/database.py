@@ -1,27 +1,28 @@
 # utils/database.py
 import sqlite3
 import os
+import pandas as pd
 
 DB_PATH = "data/workforce.db"
 
 def initialize_database():
-    """Create the employees table if it doesn't exist."""
+    """Create the employees table if it doesn't exist with all required columns."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS employees (
             Emp_ID INTEGER PRIMARY KEY,
-            Name TEXT,
-            Age INTEGER,
-            Gender TEXT,
-            Department TEXT,
-            Role TEXT,
-            Skills TEXT,
-            Join_Date TEXT,
-            Resign_Date TEXT,
-            Status TEXT,
-            Salary REAL,
-            Location TEXT
+            Name TEXT DEFAULT 'NA',
+            Age INTEGER DEFAULT 0,
+            Gender TEXT DEFAULT 'NA',
+            Department TEXT DEFAULT 'NA',
+            Role TEXT DEFAULT 'NA',
+            Skills TEXT DEFAULT 'NA',
+            Join_Date TEXT DEFAULT '',
+            Resign_Date TEXT DEFAULT '',
+            Status TEXT DEFAULT 'Active',
+            Salary REAL DEFAULT 0.0,
+            Location TEXT DEFAULT 'NA'
         )
     ''')
     conn.commit()
@@ -51,6 +52,7 @@ def add_employee(emp):
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+    # Insert or replace to avoid duplicate Emp_ID issues
     c.execute('''
         INSERT OR REPLACE INTO employees
         (Emp_ID, Name, Age, Gender, Department, Role, Skills, Join_Date, Resign_Date, Status, Salary, Location)
@@ -66,7 +68,14 @@ def add_employee(emp):
 def fetch_employees():
     """Fetch all employees as a pandas DataFrame."""
     conn = sqlite3.connect(DB_PATH)
-    df = pd.read_sql_query("SELECT * FROM employees", conn)
+    # Ensure all columns exist in query
+    try:
+        df = pd.read_sql_query("SELECT * FROM employees", conn)
+    except Exception:
+        # In case table exists but missing columns, return empty with all columns
+        columns = ["Emp_ID","Name","Age","Gender","Department","Role","Skills",
+                   "Join_Date","Resign_Date","Status","Salary","Location"]
+        df = pd.DataFrame(columns=columns)
     conn.close()
     return df
 
