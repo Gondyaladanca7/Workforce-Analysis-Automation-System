@@ -1,17 +1,28 @@
 # utils/pdf_export.py
 from fpdf import FPDF
 import pandas as pd
+from io import BytesIO
+import matplotlib.pyplot as plt
+import seaborn as sns
 from utils import database as db
+
+sns.set_style("whitegrid")
+
+def fig_to_image_bytes(fig):
+    buf = BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    plt.close(fig)
+    return buf
 
 def generate_summary_pdf(pdf_path: str, total: int, active: int, resigned: int, df: pd.DataFrame):
     pdf = FPDF()
     pdf.add_page()
-    
-    # Title
     pdf.set_font("Arial", 'B', 16)
     pdf.cell(0, 10, "Workforce Summary Report", ln=True, align="C")
     pdf.ln(5)
 
+    # -------------------------
     # Employee Summary
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 8, f"Total Employees: {total}", ln=True)
@@ -19,41 +30,95 @@ def generate_summary_pdf(pdf_path: str, total: int, active: int, resigned: int, 
     pdf.cell(0, 8, f"Resigned Employees: {resigned}", ln=True)
     pdf.ln(5)
 
-    # Department distribution
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, "Department Distribution:", ln=True)
-    pdf.set_font("Arial", '', 11)
-    if "Department" in df.columns and not df.empty:
-        for dept, count in df['Department'].value_counts().items():
-            pdf.cell(0, 7, f"{dept}: {count}", ln=True)
-    else:
-        pdf.cell(0, 7, "No department data available.", ln=True)
-    pdf.ln(5)
+    # -------------------------
+    # Department distribution chart
+    if not df.empty and "Department" in df.columns:
+        dept_counts = df['Department'].value_counts()
+        fig, ax = plt.subplots(figsize=(6,3))
+        sns.barplot(x=dept_counts.index, y=dept_counts.values, palette="viridis", ax=ax)
+        ax.set_ylabel("Employees")
+        ax.set_xlabel("Department")
+        ax.set_title("Employees per Department")
+        plt.xticks(rotation=45)
+        img_buf = fig_to_image_bytes(fig)
+        pdf.image(img_buf, x=15, w=180)
+        pdf.ln(5)
 
-    # Average Salary by Department
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, "Average Salary by Department:", ln=True)
-    pdf.set_font("Arial", '', 11)
-    if "Department" in df.columns and "Salary" in df.columns and not df.empty:
-        avg_salary = df.groupby("Department")["Salary"].mean()
-        for dept, sal in avg_salary.items():
-            pdf.cell(0, 7, f"{dept}: ₹{sal:,.2f}", ln=True)
-    else:
-        pdf.cell(0, 7, "No salary data available.", ln=True)
-    pdf.ln(5)
+    # -------------------------
+    # Gender ratio chart
+    if not df.empty and "Gender" in df.columns:
+        gender_counts = df['Gender'].value_counts()
+        fig, ax = plt.subplots(figsize=(4,4))
+        ax.pie(gender_counts, labels=gender_counts.index, autopct="%1.1f%%", startangle=90,
+               colors=sns.color_palette("pastel"))
+        centre_circle = plt.Circle((0,0),0.70,fc='white')
+        fig.gca().add_artist(centre_circle)
+        ax.set_title("Gender Ratio")
+        img_buf = fig_to_image_bytes(fig)
+        pdf.image(img_buf, x=50, w=100)
+        pdf.ln(5)
 
-    # Mood Tracker Logs
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, "Employee Mood Logs:", ln=True)
-    pdf.set_font("Arial", '', 11)
+    # -------------------------
+    # Average salary by department chart
+    if not df.empty and "Salary" in df.columns and "Department" in df.columns:
+        avg_salary = df.groupby("Department")["Salary"].mean().sort_values()
+        fig, ax = plt.subplots(figsize=(6,3))
+        sns.barplot(x=avg_salary.values, y=avg_salary.index, palette="magma", ax=ax)
+        ax.set_xlabel("Average Salary")
+        ax.set_ylabel("Department")
+        ax.set_title("Average Salary by Department")
+        img_buf = fig_to_image_bytes(fig)
+        pdf.image(img_buf, x=15, w=180)
+        pdf.ln(5)
+
+    # -------------------------
+    # Mood Analytics
     mood_df = db.fetch_mood_logs()
     if not mood_df.empty:
         merged = pd.merge(mood_df, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="left")
-        merged_sorted = merged.sort_values(by="log_date", ascending=False)
-        for _, row in merged_sorted.iterrows():
-            pdf.cell(0, 7, f"{row['log_date']} - {row['Name']} ({row['emp_id']}): {row['mood']}", ln=True)
-    else:
-        pdf.cell(0, 7, "No mood logs found.", ln=True)
+        merged['Mood_Label'] = merged['mood'].replace({
+            "😊 Happy":"Happy","😐 Neutral":"Neutral","😔 Sad":"Sad","😡 Angry":"Angry"
+        })
+        mood_score_map = {"Happy":3,"Neutral":2,"Sad":1,"Angry":0}
+        merged['Mood_Score'] = merged['Mood_Label'].map(mood_score_map)
 
-    # Save PDF
+        # Average mood per employee
+        avg_mood = merged.groupby("Name")["Mood_Score"].mean().sort_values()
+        fig, ax = plt.subplots(figsize=(6,3))
+        sns.barplot(x=avg_mood.values, y=avg_mood.index, palette="coolwarm", ax=ax)
+        ax.set_xlabel("Average Mood Score (0-3)")
+        ax.set_ylabel("Employee")
+        ax.set_title("Average Mood per Employee")
+        img_buf = fig_to_image_bytes(fig)
+        pdf.image(img_buf, x=15, w=180)
+        pdf.ln(5)
+
+        # Overall mood distribution pie
+        mood_counts = merged['Mood_Label'].value_counts()
+        fig, ax = plt.subplots(figsize=(4,4))
+        ax.pie(mood_counts, labels=mood_counts.index, autopct="%1.1f%%", startangle=90,
+               colors=sns.color_palette("Set2"))
+        centre_circle = plt.Circle((0,0),0.70,fc='white')
+        fig.gca().add_artist(centre_circle)
+        ax.set_title("Overall Team Mood")
+        img_buf = fig_to_image_bytes(fig)
+        pdf.image(img_buf, x=50, w=100)
+        pdf.ln(5)
+
+        # Mood trend over time
+        fig, ax = plt.subplots(figsize=(6,3))
+        for name, group in merged.groupby("Name"):
+            group_sorted = group.sort_values(by="log_date")
+            ax.plot(group_sorted["log_date"], group_sorted["Mood_Score"], marker='o', label=name)
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Mood Score (0-3)")
+        ax.set_title("Mood Trend Over Time")
+        ax.legend(fontsize=6)
+        plt.xticks(rotation=45)
+        img_buf = fig_to_image_bytes(fig)
+        pdf.image(img_buf, x=15, w=180)
+        pdf.ln(5)
+
+    # -------------------------
+    # Output PDF
     pdf.output(pdf_path)

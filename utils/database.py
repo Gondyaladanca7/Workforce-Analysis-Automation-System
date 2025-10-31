@@ -4,7 +4,6 @@ import pandas as pd
 DB_PATH = "data/workforce.db"
 
 def initialize_database():
-    """Create the employees table if it doesn't exist."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
@@ -27,16 +26,14 @@ def initialize_database():
     conn.close()
 
 def add_employee(emp):
-    """Add a single employee dict to the database."""
     defaults = {
-        'Emp_ID': None, 'Name': "NA", 'Age': 0, 'Gender': "NA",
-        'Department': "NA", 'Role': "NA", 'Skills': "NA",
-        'Join_Date': "", 'Resign_Date': "", 'Status': "Active",
-        'Salary': 0.0, 'Location': "NA"
+        'Emp_ID': None,'Name': "NA",'Age': 0,'Gender': "NA",'Department': "NA",
+        'Role': "NA",'Skills': "NA",'Join_Date': "",'Resign_Date': "",
+        'Status': "Active",'Salary': 0.0,'Location': "NA"
     }
-    for k, v in defaults.items():
-        if k not in emp or emp[k] is None:
-            emp[k] = v
+    for key, value in defaults.items():
+        if key not in emp or emp[key] is None:
+            emp[key] = value
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
@@ -53,12 +50,7 @@ def add_employee(emp):
 
 def fetch_employees():
     conn = sqlite3.connect(DB_PATH)
-    try:
-        df = pd.read_sql_query("SELECT * FROM employees", conn)
-    except Exception:
-        columns = ["Emp_ID","Name","Age","Gender","Department","Role","Skills",
-                   "Join_Date","Resign_Date","Status","Salary","Location"]
-        df = pd.DataFrame(columns=columns)
+    df = pd.read_sql_query("SELECT * FROM employees", conn)
     conn.close()
     return df
 
@@ -69,11 +61,8 @@ def delete_employee(emp_id):
     conn.commit()
     conn.close()
 
-# -------------------------
-# Mood Tracker Functions
-# -------------------------
+# ---------------- Feature 3: Mood Tracker ----------------
 def initialize_mood_table():
-    """Create mood_logs table if not exists."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
