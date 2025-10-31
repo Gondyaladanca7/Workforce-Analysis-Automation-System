@@ -251,15 +251,23 @@ with st.sidebar.form("add_employee_form"):
 
 # -------------------------
 # Export Summary PDF
+# -------------------------
+# Export Summary PDF
 st.subheader("📄 Export Summary Report")
 if st.button("Download Summary PDF"):
     try:
-        pdf_path = "summary_report.pdf"
+        pdf_path = "workforce_summary_report.pdf"
+        # Generate PDF using new in-memory-safe function
         generate_summary_pdf(pdf_path, total, active, resigned, filtered_df)
+        
+        # Provide download link
         with open(pdf_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-            href = f'<a href="data:application/pdf;base64,{base64_pdf}" download="summary_report.pdf">📥 Click here to download PDF</a>'
-            st.markdown(href, unsafe_allow_html=True)
+            pdf_bytes = f.read()
+        b64 = base64.b64encode(pdf_bytes).decode()
+        href = f'<a href="data:application/pdf;base64,{b64}" download="workforce_summary_report.pdf">📥 Click here to download PDF</a>'
+        st.markdown(href, unsafe_allow_html=True)
+
     except Exception as e:
         st.error("Failed to generate PDF.")
         st.exception(e)
+

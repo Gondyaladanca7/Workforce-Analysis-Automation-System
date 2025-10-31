@@ -56,6 +56,33 @@ if selected_role != "All":
 if selected_skills != "All":
     filtered_df = filtered_df[filtered_df["Skills"] == selected_skills]
 
+
+# -------------------------
+# Skill Inventory & Role Mapping
+st.header("🔧 Skill Inventory & Role Mapping")
+try:
+    if not filtered_df.empty and "Skills" in filtered_df.columns and "Role" in filtered_df.columns:
+        # Split semicolon-separated skills into individual rows
+        skill_rows = filtered_df.assign(Skill=filtered_df['Skills'].str.split(';')).explode('Skill')
+        skill_rows['Skill'] = skill_rows['Skill'].str.strip()
+
+        # Group by Skill and Role, count employees
+        skill_role_counts = skill_rows.groupby(['Skill', 'Role']).size().reset_index(name='Count')
+
+        # Display table
+        st.subheader("Employee Count by Skill & Role")
+        st.dataframe(skill_role_counts)
+
+        # Optional: Bar chart for top 10 skills
+        top_skills = skill_rows['Skill'].value_counts().head(10)
+        st.subheader("Top 10 Skills in Workforce")
+        st.bar_chart(top_skills)
+    else:
+        st.info("No skill data available in the filtered dataset.")
+except Exception as e:
+    st.error("Error generating skill inventory summary.")
+    st.exception(e)
+
 # -------------------------
 # Search
 st.header("1️⃣ Search Employee Records")
