@@ -1,17 +1,17 @@
-# Reports Page
+# pages/4_📁_Reports.py
 """
 Reports — Workforce Analytics System
-Provides summary reports, charts, and PDF export functionality.
-Integrates with utils.database, utils.analytics, and utils.pdf_export.
+Generates summary PDF reports and displays workforce analytics.
+Integrates with utils.database and utils.pdf_export.
 """
 
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import base64
 from utils import database as db
 from utils.analytics import get_summary, department_distribution, gender_ratio, average_salary_by_dept
 from utils.pdf_export import generate_summary_pdf
+import matplotlib.pyplot as plt
 
 # -------------------------
 st.set_page_config(page_title="Reports", page_icon="📁", layout="wide")
@@ -24,12 +24,14 @@ try:
 except Exception as e:
     st.error("Failed to fetch employee data from database.")
     st.exception(e)
-    df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role",
-                               "Skills","Join_Date","Resign_Date","Status","Salary","Location"])
+    df = pd.DataFrame(columns=[
+        "Emp_ID","Name","Age","Gender","Department","Role",
+        "Skills","Join_Date","Resign_Date","Status","Salary","Location"
+    ])
 
 # -------------------------
 # Summary Metrics
-st.header("1️⃣ Key Summary Metrics")
+st.header("1️⃣ Key Metrics Summary")
 try:
     total, active, resigned = get_summary(df) if not df.empty else (0,0,0)
     col1, col2, col3 = st.columns(3)
@@ -41,8 +43,23 @@ except Exception as e:
     st.exception(e)
 
 # -------------------------
-# Department-wise Distribution
-st.header("2️⃣ Department Distribution")
+# Generate PDF Report
+st.header("2️⃣ Export Summary Report")
+if st.button("Download PDF Report"):
+    try:
+        pdf_path = "summary_report.pdf"
+        generate_summary_pdf(pdf_path, total, active, resigned)
+        with open(pdf_path, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
+            href = f'<a href="data:application/pdf;base64,{base64_pdf}" download="summary_report.pdf">📥 Click here to download PDF</a>'
+            st.markdown(href, unsafe_allow_html=True)
+    except Exception as e:
+        st.error("Failed to generate PDF report.")
+        st.exception(e)
+
+# -------------------------
+# Department Distribution Chart
+st.header("3️⃣ Department Distribution")
 try:
     if not df.empty and "Department" in df.columns:
         dept_counts = department_distribution(df)
@@ -54,8 +71,8 @@ except Exception as e:
     st.exception(e)
 
 # -------------------------
-# Gender Ratio
-st.header("3️⃣ Gender Ratio")
+# Gender Ratio Pie Chart
+st.header("4️⃣ Gender Ratio")
 try:
     if not df.empty and "Gender" in df.columns:
         gender_counts = gender_ratio(df)
@@ -70,8 +87,8 @@ except Exception as e:
     st.exception(e)
 
 # -------------------------
-# Average Salary by Department
-st.header("4️⃣ Average Salary by Department")
+# Average Salary by Department Chart
+st.header("5️⃣ Average Salary by Department")
 try:
     if not df.empty and "Department" in df.columns and "Salary" in df.columns:
         avg_salary = average_salary_by_dept(df)
@@ -81,20 +98,3 @@ try:
 except Exception as e:
     st.error("Error plotting average salary by department.")
     st.exception(e)
-
-# -------------------------
-# Export Summary PDF
-st.header("5️⃣ Export Summary PDF")
-st.write("Generate a PDF report with total, active, and resigned employees.")
-
-if st.button("Download Summary PDF"):
-    try:
-        pdf_path = "summary_report.pdf"
-        generate_summary_pdf(pdf_path, total, active, resigned)
-        with open(pdf_path, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode("utf-8")
-            href = f'<a href="data:application/pdf;base64,{base64_pdf}" download="summary_report.pdf">📥 Click here to download PDF</a>'
-            st.markdown(href, unsafe_allow_html=True)
-    except Exception as e:
-        st.error("Failed to generate PDF.")
-        st.exception(e)

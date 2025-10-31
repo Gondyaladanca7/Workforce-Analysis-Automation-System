@@ -1,4 +1,4 @@
-# Employee Records Page
+# pages/2_📄_Employee_Records.py
 """
 Employee Records — Workforce Analytics System
 Displays all employee records in a searchable, filterable, and sortable table.
@@ -8,6 +8,7 @@ Integrates with utils.database and utils.analytics.
 import streamlit as st
 import pandas as pd
 from utils import database as db
+from utils.analytics import get_summary
 
 # -------------------------
 st.set_page_config(page_title="Employee Records", page_icon="📄", layout="wide")
@@ -20,14 +21,17 @@ try:
 except Exception as e:
     st.error("Failed to fetch employee data from database.")
     st.exception(e)
-    df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role",
-                               "Skills","Join_Date","Resign_Date","Status","Salary","Location"])
+    df = pd.DataFrame(columns=[
+        "Emp_ID","Name","Age","Gender","Department","Role",
+        "Skills","Join_Date","Resign_Date","Status","Salary","Location"
+    ])
 
 # -------------------------
 # Sidebar Filters
 st.sidebar.header("🔍 Filter Employee Data")
 
 def safe_options(df_local, col):
+    """Return sorted unique options for a column, plus 'All'."""
     if col in df_local.columns:
         opts = sorted(df_local[col].dropna().unique().tolist())
         return ["All"] + opts
@@ -93,9 +97,7 @@ except Exception:
 # Summary
 st.header("3️⃣ Summary Statistics")
 try:
-    total = len(display_df)
-    active = len(display_df[display_df["Status"]=="Active"]) if "Status" in display_df.columns else 0
-    resigned = len(display_df[display_df["Status"]=="Resigned"]) if "Status" in display_df.columns else 0
+    total, active, resigned = get_summary(display_df) if not display_df.empty else (0,0,0)
     col1, col2, col3 = st.columns(3)
     col1.metric("Total Employees", total)
     col2.metric("Active Employees", active)
