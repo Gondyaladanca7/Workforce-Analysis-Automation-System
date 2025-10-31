@@ -1,11 +1,7 @@
 # app.py
 """
 Workforce Analytics & Employee Management System
-Full application file — copy & replace your existing app.py with this.
-Authentication: simple bcrypt-based local login for user GOVIND / LADU (dev only).
-Database: uses utils.database (SQLite) for persistence.
-Analytics helpers: utils.analytics
-PDF export: utils.pdf_export.generate_summary_pdf
+Includes: Employee management, Analytics, PDF export, Employee Mood Tracker.
 """
 
 import streamlit as st
@@ -24,7 +20,7 @@ from typing import Dict
 st.set_page_config(page_title="Workforce Analytics System", page_icon="👩‍💼", layout="wide")
 
 # -------------------------
-# Simple authentication (dev only)
+# Authentication (dev only)
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user = None
@@ -65,25 +61,26 @@ if not st.session_state.logged_in:
 
 auth_user = st.session_state.user or PLAIN_USERNAME
 st.sidebar.success(f"Welcome {auth_user} 👋")
-
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.session_state.user = None
     st.rerun()
 
 # -------------------------
-# Initialize DB & load data
+# Initialize DB & Mood table
 try:
     db.initialize_database()
+    db.initialize_mood_table()  # <--- Mood Tracker table
 except Exception as e:
     st.error("Failed to initialize database.")
     st.exception(e)
     st.stop()
 
+# Load employee data
 try:
     df = db.fetch_employees()
 except Exception as e:
-    st.error("Failed to load employee data from database.")
+    st.error("Failed to load employee data.")
     st.exception(e)
     df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"])
 
@@ -104,47 +101,32 @@ selected_skills = st.sidebar.selectbox("Skills", safe_options(df, "Skills"))
 
 # Apply filters
 filtered_df = df.copy()
-if selected_dept != "All" and "Department" in filtered_df.columns:
-    filtered_df = filtered_df[filtered_df["Department"] == selected_dept]
-if selected_status != "All" and "Status" in filtered_df.columns:
-    filtered_df = filtered_df[filtered_df["Status"] == selected_status]
-if selected_gender != "All" and "Gender" in filtered_df.columns:
-    filtered_df = filtered_df[filtered_df["Gender"] == selected_gender]
-if selected_role != "All" and "Role" in filtered_df.columns:
-    filtered_df = filtered_df[filtered_df["Role"] == selected_role]
-if selected_skills != "All" and "Skills" in filtered_df.columns:
-    filtered_df = filtered_df[filtered_df["Skills"] == selected_skills]
+if selected_dept != "All": filtered_df = filtered_df[filtered_df["Department"]==selected_dept]
+if selected_status != "All": filtered_df = filtered_df[filtered_df["Status"]==selected_status]
+if selected_gender != "All": filtered_df = filtered_df[filtered_df["Gender"]==selected_gender]
+if selected_role != "All": filtered_df = filtered_df[filtered_df["Role"]==selected_role]
+if selected_skills != "All": filtered_df = filtered_df[filtered_df["Skills"]==selected_skills]
 
 # -------------------------
-# Main: Employee Table
+# Main Employee Table
 st.header("1️⃣ Employee Records")
 search_term = st.text_input("Search by Name, ID, Skills, or Role").strip()
 display_df = filtered_df.copy()
-
 if search_term:
     cond = pd.Series([False]*len(display_df), index=display_df.index)
     for col in ["Name","Emp_ID","Skills","Role"]:
         if col in display_df.columns:
-            cond = cond | display_df[col].astype(str).str.contains(search_term, case=False, na=False)
+            cond |= display_df[col].astype(str).str.contains(search_term, case=False, na=False)
     display_df = display_df[cond]
 
-available_sort_cols = [c for c in ["Emp_ID","Name","Age","Salary","Join_Date","Department","Role","Skills"] if c in display_df.columns]
-if not available_sort_cols:
-    available_sort_cols = display_df.columns.tolist()
-sort_col = st.selectbox("Sort by", options=available_sort_cols, index=0)
+sort_col = st.selectbox("Sort by", options=[c for c in ["Emp_ID","Name","Age","Salary","Join_Date","Department","Role","Skills"] if c in display_df.columns], index=0)
 ascending = st.radio("Order", ["Ascending","Descending"], horizontal=True) == "Ascending"
-
 try:
-    if sort_col in display_df.columns:
-        display_df = display_df.sort_values(by=sort_col, ascending=ascending, key=lambda s: s.astype(str))
+    display_df = display_df.sort_values(by=sort_col, ascending=ascending, key=lambda s: s.astype(str))
 except Exception:
     pass
 
-try:
-    styled = display_df.style.set_properties(**{"background-color":"white","color":"black"})
-    st.dataframe(styled, height=400)
-except Exception:
-    st.dataframe(display_df, height=400)
+st.dataframe(display_df, height=400)
 
 # -------------------------
 # Delete Employee
@@ -165,66 +147,44 @@ if st.button("Delete Employee"):
 # -------------------------
 # Summary & Analytics
 st.header("2️⃣ Workforce Summary")
-try:
-    total, active, resigned = get_summary(filtered_df) if not filtered_df.empty else (0,0,0)
-    st.write(f"Total Employees: **{total}**")
-    st.write(f"Active Employees: **{active}**")
-    st.write(f"Resigned Employees: **{resigned}**")
-except Exception as e:
-    st.error("Error computing summary.")
-    st.exception(e)
+total, active, resigned = get_summary(filtered_df) if not filtered_df.empty else (0,0,0)
+st.write(f"Total Employees: **{total}**")
+st.write(f"Active Employees: **{active}**")
+st.write(f"Resigned Employees: **{resigned}**")
 
 st.header("3️⃣ Department Distribution")
-try:
-    if not filtered_df.empty and "Department" in filtered_df.columns:
-        st.bar_chart(department_distribution(filtered_df))
-except Exception as e:
-    st.error("Error plotting department distribution.")
-    st.exception(e)
+if not filtered_df.empty and "Department" in filtered_df.columns:
+    st.bar_chart(department_distribution(filtered_df))
 
 st.header("4️⃣ Gender Ratio")
-try:
-    if not filtered_df.empty and "Gender" in filtered_df.columns:
-        gender = gender_ratio(filtered_df)
-        fig, ax = plt.subplots()
-        ax.pie(gender, labels=gender.index, autopct="%1.1f%%")
-        st.pyplot(fig)
-except Exception as e:
-    st.error("Error plotting gender ratio.")
-    st.exception(e)
+if not filtered_df.empty and "Gender" in filtered_df.columns:
+    gender = gender_ratio(filtered_df)
+    fig, ax = plt.subplots()
+    ax.pie(gender, labels=gender.index, autopct="%1.1f%%")
+    st.pyplot(fig)
 
 st.header("5️⃣ Average Salary by Department")
-try:
-    if not filtered_df.empty and "Department" in filtered_df.columns and "Salary" in filtered_df.columns:
-        st.bar_chart(average_salary_by_dept(filtered_df))
-except Exception as e:
-    st.error("Error plotting average salary by department.")
-    st.exception(e)
+if not filtered_df.empty and "Department" in filtered_df.columns and "Salary" in filtered_df.columns:
+    st.bar_chart(average_salary_by_dept(filtered_df))
 
 # -------------------------
 # Add New Employee Form
 st.sidebar.header("➕ Add New Employee")
 with st.sidebar.form("add_employee_form"):
-    try:
-        next_emp_id = int(df["Emp_ID"].max()) + 1 if ("Emp_ID" in df.columns and not df["Emp_ID"].empty) else 1
-    except Exception:
-        next_emp_id = 1
-
+    next_emp_id = int(df["Emp_ID"].max())+1 if ("Emp_ID" in df.columns and not df["Emp_ID"].empty) else 1
     emp_id = st.number_input("Employee ID", value=next_emp_id, step=1, format="%d")
     emp_name = st.text_input("Name")
     age = st.number_input("Age", step=1, format="%d")
-    gender_val = st.selectbox("Gender", ["Male", "Female", "Other"])
+    gender_val = st.selectbox("Gender", ["Male","Female","Other"])
     department = st.text_input("Department")
     role = st.text_input("Role")
     skills = st.text_input("Skills (semicolon separated)")
     join_date = st.date_input("Join Date")
     status = st.selectbox("Status", ["Active","Resigned"])
     resign_date = st.date_input("Resign Date (if resigned)")
-    if status=="Active":
-        resign_date=""
+    if status=="Active": resign_date=""
     salary = st.number_input("Salary", step=1000, format="%d")
     location = st.text_input("Location")
-
     submit = st.form_submit_button("Add Employee")
     if submit:
         new_row = {
@@ -250,24 +210,40 @@ with st.sidebar.form("add_employee_form"):
             st.exception(e)
 
 # -------------------------
-# Export Summary PDF
+# Feature 3: Employee Pulse Check (Mood Tracker)
+st.header("6️⃣ Employee Pulse Check (Mood Tracker)")
+if not df.empty:
+    emp_options = df["Emp_ID"].astype(str) + " - " + df["Name"]
+    selected_emp = st.selectbox("Select Employee", options=emp_options)
+    emp_id_selected = int(selected_emp.split(" - ")[0])
+
+    mood = st.radio("How is the employee feeling today?", ["😊 Happy", "😐 Neutral", "😔 Sad", "😡 Angry"])
+    if st.button("Log Mood"):
+        today = datetime.date.today().strftime("%Y-%m-%d")
+        db.add_mood_entry(emp_id_selected, mood, today)
+        st.success(f"Mood for employee ID {emp_id_selected} logged successfully!")
+
+    st.subheader("Mood History")
+    mood_logs = db.fetch_mood_logs()
+    if not mood_logs.empty:
+        merged = pd.merge(mood_logs, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="left")
+        merged_display = merged[["emp_id","Name","mood","log_date"]].sort_values(by="log_date", ascending=False)
+        st.dataframe(merged_display, height=300)
+    else:
+        st.info("No mood logs found yet.")
+
 # -------------------------
 # Export Summary PDF
 st.subheader("📄 Export Summary Report")
 if st.button("Download Summary PDF"):
     try:
         pdf_path = "workforce_summary_report.pdf"
-        # Generate PDF using new in-memory-safe function
         generate_summary_pdf(pdf_path, total, active, resigned, filtered_df)
-        
-        # Provide download link
         with open(pdf_path, "rb") as f:
             pdf_bytes = f.read()
         b64 = base64.b64encode(pdf_bytes).decode()
         href = f'<a href="data:application/pdf;base64,{b64}" download="workforce_summary_report.pdf">📥 Click here to download PDF</a>'
         st.markdown(href, unsafe_allow_html=True)
-
     except Exception as e:
         st.error("Failed to generate PDF.")
         st.exception(e)
-

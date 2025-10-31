@@ -1,12 +1,10 @@
-# utils/database.py
 import sqlite3
-import os
 import pandas as pd
 
 DB_PATH = "data/workforce.db"
 
 def initialize_database():
-    """Create the employees table if it doesn't exist with all required columns."""
+    """Create the employees table if it doesn't exist."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
@@ -29,30 +27,18 @@ def initialize_database():
     conn.close()
 
 def add_employee(emp):
-    """Add a single employee dict to the database. Handles missing keys safely."""
+    """Add a single employee dict to the database."""
     defaults = {
-        'Emp_ID': None,
-        'Name': "NA",
-        'Age': 0,
-        'Gender': "NA",
-        'Department': "NA",
-        'Role': "NA",
-        'Skills': "NA",
-        'Join_Date': "",
-        'Resign_Date': "",
-        'Status': "Active",
-        'Salary': 0.0,
-        'Location': "NA"
+        'Emp_ID': None, 'Name': "NA", 'Age': 0, 'Gender': "NA",
+        'Department': "NA", 'Role': "NA", 'Skills': "NA",
+        'Join_Date': "", 'Resign_Date': "", 'Status': "Active",
+        'Salary': 0.0, 'Location': "NA"
     }
-    
-    # Fill missing keys with defaults
-    for key, value in defaults.items():
-        if key not in emp or emp[key] is None:
-            emp[key] = value
-
+    for k, v in defaults.items():
+        if k not in emp or emp[k] is None:
+            emp[k] = v
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    # Insert or replace to avoid duplicate Emp_ID issues
     c.execute('''
         INSERT OR REPLACE INTO employees
         (Emp_ID, Name, Age, Gender, Department, Role, Skills, Join_Date, Resign_Date, Status, Salary, Location)
@@ -66,13 +52,10 @@ def add_employee(emp):
     conn.close()
 
 def fetch_employees():
-    """Fetch all employees as a pandas DataFrame."""
     conn = sqlite3.connect(DB_PATH)
-    # Ensure all columns exist in query
     try:
         df = pd.read_sql_query("SELECT * FROM employees", conn)
     except Exception:
-        # In case table exists but missing columns, return empty with all columns
         columns = ["Emp_ID","Name","Age","Gender","Department","Role","Skills",
                    "Join_Date","Resign_Date","Status","Salary","Location"]
         df = pd.DataFrame(columns=columns)
@@ -80,9 +63,42 @@ def fetch_employees():
     return df
 
 def delete_employee(emp_id):
-    """Delete employee by ID."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("DELETE FROM employees WHERE Emp_ID=?", (emp_id,))
     conn.commit()
     conn.close()
+
+# -------------------------
+# Mood Tracker Functions
+# -------------------------
+def initialize_mood_table():
+    """Create mood_logs table if not exists."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mood_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            emp_id INTEGER,
+            mood TEXT,
+            log_date TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def add_mood_entry(emp_id: int, mood: str, log_date: str):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO mood_logs (emp_id, mood, log_date) VALUES (?, ?, ?)",
+        (emp_id, mood, log_date)
+    )
+    conn.commit()
+    conn.close()
+
+def fetch_mood_logs():
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql_query("SELECT * FROM mood_logs", conn)
+    conn.close()
+    return df
