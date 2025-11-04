@@ -3,6 +3,7 @@ import pandas as pd
 
 DB_PATH = "data/workforce.db"
 
+# ---------------- Employee Table ----------------
 def initialize_database():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -26,8 +27,11 @@ def initialize_database():
     conn.close()
 
 def add_employee(emp):
+    # Ensure only Male/Female
+    if emp.get('Gender') not in ["Male", "Female"]:
+        emp['Gender'] = "Male"
     defaults = {
-        'Emp_ID': None,'Name': "NA",'Age': 0,'Gender': "NA",'Department': "NA",
+        'Emp_ID': None,'Name': "NA",'Age': 0,'Gender': "Male",'Department': "NA",
         'Role': "NA",'Skills': "NA",'Join_Date': "",'Resign_Date': "",
         'Status': "Active",'Salary': 0.0,'Location': "NA"
     }
@@ -57,11 +61,14 @@ def fetch_employees():
 def delete_employee(emp_id):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
+    # Delete mood logs first
+    c.execute("DELETE FROM mood_logs WHERE emp_id=?", (emp_id,))
+    # Then delete employee
     c.execute("DELETE FROM employees WHERE Emp_ID=?", (emp_id,))
     conn.commit()
     conn.close()
 
-# ---------------- Feature 3: Mood Tracker ----------------
+# ---------------- Mood Tracker ----------------
 def initialize_mood_table():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
