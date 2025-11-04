@@ -1,6 +1,6 @@
 # app.py
 """
-🌟 Workforce Analytics & Employee Management System
+Workforce Analytics & Employee Management System
 Includes: Employee management, Analytics, PDF export, Employee Mood Tracker with full charts.
 """
 
@@ -17,12 +17,10 @@ from utils import database as db
 
 sns.set_style("whitegrid")
 
-# -------------------------
-# Page config
+# ------------------------- Page config
 st.set_page_config(page_title="Workforce Analytics System", page_icon="👩‍💼", layout="wide")
 
-# -------------------------
-# Authentication (dev only)
+# ------------------------- Authentication
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user = None
@@ -68,8 +66,7 @@ if st.sidebar.button("Logout"):
     st.session_state.user = None
     st.experimental_rerun()
 
-# -------------------------
-# Initialize DB & Mood table
+# ------------------------- Initialize DB & Mood table
 try:
     db.initialize_database()
     db.initialize_mood_table()
@@ -78,8 +75,7 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# -------------------------
-# Load employee data
+# ------------------------- Load employee data
 try:
     df = db.fetch_employees()
 except Exception as e:
@@ -88,8 +84,7 @@ except Exception as e:
     df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role","Skills",
                                "Join_Date","Resign_Date","Status","Salary","Location"])
 
-# -------------------------
-# Sidebar Filters
+# ------------------------- Sidebar Filters
 st.sidebar.header("🔍 Filter Employee Data")
 def safe_options(df_local, col):
     if col in df_local.columns:
@@ -111,8 +106,7 @@ if selected_gender != "All": filtered_df = filtered_df[filtered_df["Gender"]==se
 if selected_role != "All": filtered_df = filtered_df[filtered_df["Role"]==selected_role]
 if selected_skills != "All": filtered_df = filtered_df[filtered_df["Skills"]==selected_skills]
 
-# -------------------------
-# Employee Table
+# ------------------------- Employee Table
 st.header("1️⃣ Employee Records")
 search_term = st.text_input("Search by Name, ID, Skills, or Role").strip()
 display_df = filtered_df.copy()
@@ -132,17 +126,22 @@ except Exception:
 
 st.dataframe(display_df, height=400)
 
-# -------------------------
-# Delete Employee
+# ------------------------- Delete Employee
 st.subheader("🗑️ Delete Employee")
 delete_id = st.number_input("Enter Employee ID to delete", step=1, format="%d")
 if st.button("Delete Employee"):
     try:
         if "Emp_ID" in df.columns and int(delete_id) in df["Emp_ID"].astype(int).values:
-            # Delete moods first
-            db.delete_mood_logs_for_employee(int(delete_id))
+            # Delete mood logs of employee
+            conn = db.sqlite3.connect(db.DB_PATH)
+            c = conn.cursor()
+            c.execute("DELETE FROM mood_logs WHERE emp_id=?", (delete_id,))
+            conn.commit()
+            conn.close()
+            
+            # Delete employee
             db.delete_employee(int(delete_id))
-            st.success(f"Employee ID {delete_id} and associated mood logs deleted successfully!")
+            st.success(f"Employee ID {delete_id} and their mood logs deleted successfully!")
             st.experimental_rerun()
         else:
             st.warning(f"No employee found with ID {delete_id}")
@@ -150,8 +149,7 @@ if st.button("Delete Employee"):
         st.error("Failed to delete employee.")
         st.exception(e)
 
-# -------------------------
-# Summary & Analytics
+# ------------------------- Summary & Analytics
 st.header("2️⃣ Workforce Summary")
 total, active, resigned = get_summary(filtered_df) if not filtered_df.empty else (0,0,0)
 st.write(f"Total Employees: **{total}**")
@@ -167,22 +165,20 @@ if not filtered_df.empty and "Gender" in filtered_df.columns:
     gender = gender_ratio(filtered_df)
     fig, ax = plt.subplots()
     ax.pie(gender, labels=gender.index, autopct="%1.1f%%", colors=sns.color_palette("pastel"))
-    ax.set_title("Gender Ratio")
     st.pyplot(fig)
 
 st.header("5️⃣ Average Salary by Department")
 if not filtered_df.empty and "Department" in filtered_df.columns and "Salary" in filtered_df.columns:
     st.bar_chart(average_salary_by_dept(filtered_df))
 
-# -------------------------
-# Add New Employee Form
+# ------------------------- Add New Employee Form
 st.sidebar.header("➕ Add New Employee")
 with st.sidebar.form("add_employee_form"):
     next_emp_id = int(df["Emp_ID"].max())+1 if ("Emp_ID" in df.columns and not df["Emp_ID"].empty) else 1
     emp_id = st.number_input("Employee ID", value=next_emp_id, step=1, format="%d")
     emp_name = st.text_input("Name")
     age = st.number_input("Age", step=1, format="%d")
-    gender_val = st.selectbox("Gender", ["Male","Female"])  # Only Male/Female
+    gender_val = st.selectbox("Gender", ["Male","Female"])
     department = st.text_input("Department")
     role = st.text_input("Role")
     skills = st.text_input("Skills (semicolon separated)")
@@ -198,7 +194,7 @@ with st.sidebar.form("add_employee_form"):
             "Emp_ID": int(emp_id),
             "Name": emp_name or "NA",
             "Age": int(age),
-            "Gender": gender_val or "NA",
+            "Gender": gender_val,
             "Department": department or "NA",
             "Role": role or "NA",
             "Skills": skills or "NA",
@@ -216,10 +212,8 @@ with st.sidebar.form("add_employee_form"):
             st.error("Failed to add employee.")
             st.exception(e)
 
-# -------------------------
-# Feature 3: Mood Tracker
+# ------------------------- Mood Tracker
 st.header("6️⃣ Employee Pulse Check (Mood Tracker)")
-
 if not df.empty:
     emp_options = df["Emp_ID"].astype(str) + " - " + df["Name"]
     selected_emp = st.selectbox("Select Employee", options=emp_options)
@@ -236,31 +230,31 @@ if not df.empty:
     st.subheader("Mood History")
     mood_logs = db.fetch_mood_logs()
     if not mood_logs.empty:
-        # Remove logs for deleted employees
-        mood_logs = mood_logs[mood_logs['emp_id'].isin(df["Emp_ID"])]
-        merged = pd.merge(mood_logs, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="left")
+        merged = pd.merge(mood_logs, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="inner")
         merged_display = merged[["emp_id","Name","mood","log_date"]].sort_values(by="log_date", ascending=False)
         st.dataframe(merged_display, height=300)
     else:
         st.info("No mood logs found yet.")
 
-    # -------------------------
-    # Mood Analytics Charts
+    # ------------------------- Mood Analytics Charts
     st.subheader("Mood Analytics")
     if not mood_logs.empty:
         merged['Mood_Label'] = merged['mood'].replace({
-            "😊 Happy":"Happy","😐 Neutral":"Neutral","😔 Sad":"Sad","😡 Angry":"Angry"
+            "😊 Happy": "Happy",
+            "😐 Neutral": "Neutral",
+            "😔 Sad": "Sad",
+            "😡 Angry": "Angry"
         })
-        mood_score_map = {"Happy":5,"Neutral":3,"Sad":2,"Angry":1}  # Integer values only
-        merged['Mood_Score'] = merged['Mood_Label'].map(mood_score_map).astype(int)
+        mood_score_map = {"Happy":5,"Neutral":3,"Sad":2,"Angry":1}
+        merged['Mood_Score'] = merged['Mood_Label'].map(mood_score_map)
 
         # Average mood per employee
-        avg_mood = merged.groupby("Name")["Mood_Score"].mean().round(0).astype(int).sort_values()
+        avg_mood = merged.groupby("Name")["Mood_Score"].mean().round().astype(int).sort_values()
         fig, ax = plt.subplots(figsize=(6,3))
         sns.barplot(x=avg_mood.values, y=avg_mood.index, palette="coolwarm", ax=ax)
         for i, v in enumerate(avg_mood.values):
             ax.text(v + 0.1, i, str(v), color='black', va='center')
-        ax.set_xlabel("Average Mood Score (1-5)")
+        ax.set_xlabel("Average Mood Score")
         ax.set_ylabel("Employee")
         ax.set_title("Average Mood per Employee")
         st.pyplot(fig)
@@ -268,7 +262,8 @@ if not df.empty:
         # Overall mood distribution
         mood_counts = merged['Mood_Label'].value_counts()
         fig, ax = plt.subplots(figsize=(4,4))
-        ax.pie(mood_counts, labels=mood_counts.index, autopct="%1.0f", startangle=90, colors=sns.color_palette("Set2"))
+        ax.pie(mood_counts, labels=[f"{label} ({count})" for label, count in zip(mood_counts.index, mood_counts.values)],
+               autopct=None, startangle=90, colors=sns.color_palette("Set2"))
         ax.set_title("Overall Team Mood")
         st.pyplot(fig)
 
@@ -278,14 +273,13 @@ if not df.empty:
             group_sorted = group.sort_values(by="log_date")
             ax.plot(group_sorted["log_date"], group_sorted["Mood_Score"], marker='o', label=name)
         ax.set_xlabel("Date")
-        ax.set_ylabel("Mood Score (1-5)")
+        ax.set_ylabel("Mood Score")
         ax.set_title("Mood Trend Over Time")
         ax.legend(fontsize=6)
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
-# -------------------------
-# Export PDF
+# ------------------------- Export PDF
 st.subheader("📄 Export Summary Report")
 if st.button("Download Summary PDF"):
     try:
@@ -299,3 +293,7 @@ if st.button("Download Summary PDF"):
     except Exception as e:
         st.error("Failed to generate PDF.")
         st.exception(e)
+
+# ------------------------- Future Placeholder Sections
+st.header("7️⃣ Future Features")
+st.info("AI Skill Radar, Project Health Tracker, and Burnout Prediction will be integrated here in future updates.")
