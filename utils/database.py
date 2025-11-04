@@ -1,9 +1,9 @@
+# database.py
 import sqlite3
 import pandas as pd
 
 DB_PATH = "data/workforce.db"
 
-# ---------------- Employee Table ----------------
 def initialize_database():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -27,17 +27,17 @@ def initialize_database():
     conn.close()
 
 def add_employee(emp):
-    # Ensure only Male/Female
-    if emp.get('Gender') not in ["Male", "Female"]:
-        emp['Gender'] = "Male"
     defaults = {
-        'Emp_ID': None,'Name': "NA",'Age': 0,'Gender': "Male",'Department': "NA",
+        'Emp_ID': None,'Name': "NA",'Age': 0,'Gender': "NA",'Department': "NA",
         'Role': "NA",'Skills': "NA",'Join_Date': "",'Resign_Date': "",
         'Status': "Active",'Salary': 0.0,'Location': "NA"
     }
     for key, value in defaults.items():
         if key not in emp or emp[key] is None:
             emp[key] = value
+    # Enforce Gender restriction
+    if emp['Gender'] not in ['Male','Female']:
+        emp['Gender'] = 'Male'
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
@@ -63,12 +63,12 @@ def delete_employee(emp_id):
     c = conn.cursor()
     # Delete mood logs first
     c.execute("DELETE FROM mood_logs WHERE emp_id=?", (emp_id,))
-    # Then delete employee
+    # Delete employee
     c.execute("DELETE FROM employees WHERE Emp_ID=?", (emp_id,))
     conn.commit()
     conn.close()
 
-# ---------------- Mood Tracker ----------------
+# ---------------- Feature 3: Mood Tracker ----------------
 def initialize_mood_table():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()

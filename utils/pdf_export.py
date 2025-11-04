@@ -1,3 +1,4 @@
+# utils/pdf_export.py
 from fpdf import FPDF
 import pandas as pd
 from io import BytesIO
@@ -52,7 +53,7 @@ def generate_summary_pdf(pdf_path: str, total: int, active: int, resigned: int, 
         pdf.image(img_buf, x=50, w=100)
         pdf.ln(5)
 
-    # Average salary by department
+    # Average salary by department (horizontal bar to match dashboard)
     if not df.empty and "Salary" in df.columns and "Department" in df.columns:
         avg_salary = df.groupby("Department")["Salary"].mean().sort_values()
         fig, ax = plt.subplots(figsize=(6,3))
@@ -66,21 +67,18 @@ def generate_summary_pdf(pdf_path: str, total: int, active: int, resigned: int, 
 
     # Mood Analytics
     mood_df = db.fetch_mood_logs()
-    if not mood_df.empty:
-        merged = pd.merge(mood_df, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="left")
-        merged['Mood_Label'] = merged['mood'].replace({
-            "😊 Happy":"Happy","😐 Neutral":"Neutral","😔 Sad":"Sad","😡 Angry":"Angry"
-        })
-        # Set integer values
+    if not mood_df.empty and not df.empty:
+        merged = pd.merge(mood_df, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="inner")
+        merged['Mood_Label'] = merged['mood'].replace({"😊 Happy":"Happy","😐 Neutral":"Neutral","😔 Sad":"Sad","😡 Angry":"Angry"})
         mood_score_map = {"Happy":5,"Neutral":3,"Sad":2,"Angry":1}
-        merged['Mood_Score'] = merged['Mood_Label'].map(mood_score_map)
+        merged['Mood_Score'] = merged['Mood_Label'].map(mood_score_map).astype(int)
 
         # Average mood per employee
-        avg_mood = merged.groupby("Name")["Mood_Score"].mean().round().astype(int).sort_values()
+        avg_mood = merged.groupby("Name")["Mood_Score"].mean().round(0).astype(int).sort_values()
         fig, ax = plt.subplots(figsize=(6,3))
         sns.barplot(x=avg_mood.values, y=avg_mood.index, palette="coolwarm", ax=ax)
         for i, v in enumerate(avg_mood.values):
-            ax.text(v+0.1, i, str(v), color='black', va='center')
+            ax.text(v + 0.1, i, str(v), color='black', va='center')
         ax.set_xlabel("Average Mood Score (1-5)")
         ax.set_ylabel("Employee")
         ax.set_title("Average Mood per Employee")
@@ -91,9 +89,7 @@ def generate_summary_pdf(pdf_path: str, total: int, active: int, resigned: int, 
         # Overall mood distribution
         mood_counts = merged['Mood_Label'].value_counts()
         fig, ax = plt.subplots(figsize=(4,4))
-        ax.pie(mood_counts, labels=mood_counts.index, autopct="%1.0f%%", startangle=90, colors=sns.color_palette("Set2"))
-        centre_circle = plt.Circle((0,0),0.70,fc='white')
-        fig.gca().add_artist(centre_circle)
+        ax.pie(mood_counts, labels=mood_counts.index, autopct="%1.0f", startangle=90, colors=sns.color_palette("Set2"))
         ax.set_title("Overall Team Mood")
         img_buf = fig_to_image_bytes(fig)
         pdf.image(img_buf, x=50, w=100)
