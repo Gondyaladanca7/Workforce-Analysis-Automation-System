@@ -83,7 +83,8 @@ if submit:
         try:
             db.add_employee(new_row)
             st.success(f"Employee **{emp_name}** added successfully!")
-            st.experimental_rerun()
+            st.session_state["login_trigger"] = not st.session_state.get("login_trigger", False)
+
         except Exception as e:
             st.error("Failed to add employee to database.")
             st.exception(e)

@@ -1,4 +1,3 @@
-# auth.py
 """
 Authentication and Role-based Access Control
 """
@@ -33,20 +32,22 @@ def login_user():
 
     if st.button("Login"):
         if username in USERS and password == USERS[username]["password"]:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.session_state.role = USERS[username]["role"]
-            st.success(f"Welcome, {username.title()} ({st.session_state.role}) 🎉")
-            st.experimental_rerun()
+            st.session_state["logged_in"] = True
+            st.session_state["username"] = username
+            st.session_state["role"] = USERS[username]["role"]
+            st.success(f"Welcome, {username.title()} ({st.session_state['role']}) 🎉")
+            # Trigger a rerun via session state toggle
+            st.session_state["login_trigger"] = not st.session_state.get("login_trigger", False)
         else:
             st.error("Invalid credentials. Please try again.")
 
 def logout_user():
     if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.username = None
-        st.session_state.role = None
-        st.experimental_rerun()
+        st.session_state["logged_in"] = False
+        st.session_state["username"] = None
+        st.session_state["role"] = None
+        # Trigger a rerun
+        st.session_state["login_trigger"] = not st.session_state.get("login_trigger", False)
 
 # -------------------------
 # Require login decorator
@@ -55,7 +56,7 @@ def require_login(func):
     Decorator to protect pages: user must be logged in
     """
     def wrapper(*args, **kwargs):
-        if "logged_in" not in st.session_state or not st.session_state.logged_in:
+        if not st.session_state.get("logged_in", False):
             login_user()
             st.stop()
         return func(*args, **kwargs)
@@ -65,5 +66,5 @@ def require_login(func):
 # Sidebar Role Badge
 def show_role_badge():
     """Show logged-in user and role in sidebar"""
-    if "username" in st.session_state and "role" in st.session_state:
-        st.sidebar.info(f"👤 Logged in as: **{st.session_state.username.title()} ({st.session_state.role})**")
+    if st.session_state.get("username") and st.session_state.get("role"):
+        st.sidebar.info(f"👤 Logged in as: **{st.session_state['username'].title()} ({st.session_state['role']})**")

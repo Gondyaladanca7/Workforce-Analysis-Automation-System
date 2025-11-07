@@ -1,7 +1,13 @@
 # init_tasks_mood.py
 import sqlite3
+import os
 
-DB_PATH = "data/workforce.db"
+# -------------------------
+# Ensure data folder exists
+# -------------------------
+DB_FOLDER = "data"
+DB_PATH = os.path.join(DB_FOLDER, "workforce.db")
+os.makedirs(DB_FOLDER, exist_ok=True)
 
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
@@ -28,6 +34,7 @@ CREATE TABLE IF NOT EXISTS mood (
     mood_id INTEGER PRIMARY KEY AUTOINCREMENT,
     emp_id INTEGER NOT NULL,
     mood TEXT NOT NULL,
+    remarks TEXT,
     log_date TEXT DEFAULT (date('now'))
 )
 """)
