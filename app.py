@@ -1,4 +1,3 @@
-# app.py
 """
 Workforce Analytics & Employee Management System
 Single-entry app that routes by role (uses auth.py).
@@ -15,9 +14,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import base64
+from datetime import date
 import datetime
 
-# local modules
+# Local modules
 from auth import require_login, logout_user, show_role_badge
 from utils import database as db
 from utils.analytics import get_summary, department_distribution, gender_ratio, average_salary_by_dept
@@ -26,12 +26,12 @@ from utils.pdf_export import generate_summary_pdf
 sns.set_style("whitegrid")
 
 # -------------------------
-# Streamlit config
+# Streamlit page config
 # -------------------------
 st.set_page_config(page_title="Workforce Analytics System", page_icon="👩‍💼", layout="wide")
 
 # -------------------------
-# Require login (auth.py)
+# Require login
 # -------------------------
 require_login()
 show_role_badge()
@@ -41,14 +41,12 @@ role = st.session_state.get("role", "Employee")
 username = st.session_state.get("username", "unknown")
 
 # -------------------------
-# Initialize DB (tables)
+# Initialize DB tables
 # -------------------------
 try:
     db.initialize_database()
-    if hasattr(db, "initialize_mood_table"):
-        db.initialize_mood_table()
-    if hasattr(db, "initialize_task_table"):
-        db.initialize_task_table()
+    db.initialize_mood_table()
+    db.initialize_task_table()
 except Exception as e:
     st.error("Failed to initialize database tables.")
     st.exception(e)
@@ -65,12 +63,12 @@ except Exception as e:
     df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"])
 
 # -------------------------
-# Sidebar Controls
+# Sidebar Filters & CSV Upload
 # -------------------------
 st.sidebar.header("Controls")
 st.sidebar.markdown(f"**Logged in as:** {username} — **{role}**")
 
-# Filters
+# Filters helper
 def safe_options(df_local, col):
     return ["All"] + sorted(df_local[col].dropna().unique().tolist()) if col in df_local.columns else ["All"]
 
@@ -82,7 +80,7 @@ selected_skills = st.sidebar.selectbox("Skills", safe_options(df, "Skills"))
 
 # CSV Upload (Admin/Manager)
 if role in ("Admin","Manager"):
-    st.sidebar.header("📁 Import CSV (optional)")
+    st.sidebar.header("📁 Import CSV")
     uploaded_file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
     if uploaded_file:
         try:
@@ -95,7 +93,6 @@ if role in ("Admin","Manager"):
             for col, default in required_cols.items():
                 if col not in df_uploaded.columns:
                     df_uploaded[col] = default
-            # Assign IDs if missing
             existing_ids = set(df["Emp_ID"].dropna().astype(int).tolist()) if not df.empty else set()
             next_id = max(existing_ids)+1 if existing_ids else 1
             for _, row in df_uploaded.iterrows():
@@ -126,26 +123,20 @@ if role in ("Admin","Manager"):
             st.exception(e)
 
 # -------------------------
-# Apply Filters
+# Apply filters
 # -------------------------
 filtered_df = df.copy()
-if selected_dept != "All":
-    filtered_df = filtered_df[filtered_df["Department"]==selected_dept]
-if selected_status != "All":
-    filtered_df = filtered_df[filtered_df["Status"]==selected_status]
-if selected_gender != "All":
-    filtered_df = filtered_df[filtered_df["Gender"]==selected_gender]
-if selected_role != "All":
-    filtered_df = filtered_df[filtered_df["Role"]==selected_role]
-if selected_skills != "All":
-    filtered_df = filtered_df[filtered_df["Skills"]==selected_skills]
+if selected_dept != "All": filtered_df = filtered_df[filtered_df["Department"]==selected_dept]
+if selected_status != "All": filtered_df = filtered_df[filtered_df["Status"]==selected_status]
+if selected_gender != "All": filtered_df = filtered_df[filtered_df["Gender"]==selected_gender]
+if selected_role != "All": filtered_df = filtered_df[filtered_df["Role"]==selected_role]
+if selected_skills != "All": filtered_df = filtered_df[filtered_df["Skills"]==selected_skills]
 
 # -------------------------
 # Employee Records
 # -------------------------
 st.title("👩‍💼 Workforce Analytics System")
 st.header("1️⃣ Employee Records")
-
 search_term = st.text_input("Search by Name, ID, Skills, or Role").strip()
 display_df = filtered_df.copy()
 if search_term:
@@ -158,7 +149,6 @@ if search_term:
 sort_col = st.selectbox("Sort by", display_df.columns.tolist())
 ascending = st.radio("Order", ["Ascending","Descending"], horizontal=True)=="Ascending"
 display_df = display_df.sort_values(by=sort_col, ascending=ascending, key=lambda s: s.astype(str))
-
 st.dataframe(display_df, height=420)
 
 # -------------------------
@@ -179,10 +169,10 @@ if role=="Admin":
 # Summary & Analytics
 # -------------------------
 st.header("2️⃣ Workforce Summary")
-total, active, resigned = get_summary(filtered_df) if not filtered_df.empty else (0,0,0)
-st.metric("Total Employees", total)
-st.metric("Active Employees", active)
-st.metric("Resigned Employees", resigned)
+summary = get_summary(filtered_df) if not filtered_df.empty else {"total":0,"active":0,"resigned":0}
+st.metric("Total Employees", summary["total"])
+st.metric("Active Employees", summary["active"])
+st.metric("Resigned Employees", summary["resigned"])
 
 st.header("3️⃣ Department Distribution")
 if not filtered_df.empty and "Department" in filtered_df.columns:
@@ -201,7 +191,7 @@ if not filtered_df.empty and "Salary" in filtered_df.columns and "Department" in
     st.bar_chart(average_salary_by_dept(filtered_df))
 
 # -------------------------
-# Add New Employee (Admin/Manager)
+# Add New Employee (Sidebar)
 # -------------------------
 if role in ("Admin","Manager"):
     st.sidebar.header("➕ Add New Employee")
@@ -261,7 +251,6 @@ try:
     tasks_df = db.fetch_tasks()
 except:
     tasks_df = pd.DataFrame()
-
 if not tasks_df.empty:
     tasks_df["overdue"] = pd.to_datetime(tasks_df["due_date"], errors="coerce")<datetime.date.today()
     emp_map = df.set_index("Emp_ID")["Name"].to_dict()
@@ -286,12 +275,12 @@ else:
 
 mood_choice = st.radio("Mood today", ["😊 Happy","😐 Neutral","😔 Sad","😡 Angry"], horizontal=True)
 if st.button("Log Mood"):
-    db.log_mood(emp_mood_id, mood_choice)
+    db.add_mood_entry(emp_mood_id, mood_choice, date.today().strftime("%Y-%m-%d"))
     st.success("Mood logged.")
     st.session_state["refresh_trigger"] = not st.session_state.get("refresh_trigger", False)
 
 try:
-    mood_df = db.fetch_mood()
+    mood_df = db.fetch_mood_logs()
     mood_merged = pd.merge(mood_df, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="left")
     mood_display = mood_merged[["emp_id","Name","mood","log_date"]].sort_values(by="log_date", ascending=False)
     st.subheader("Mood History")
@@ -306,7 +295,7 @@ st.header("📄 Export")
 if role in ("Admin","Manager"):
     if st.button("Download Summary PDF"):
         pdf_path = "workforce_summary_report.pdf"
-        generate_summary_pdf(pdf_path, total, active, resigned, filtered_df)
+        generate_summary_pdf(pdf_path, summary["total"], summary["active"], summary["resigned"], filtered_df)
         with open(pdf_path, "rb") as f:
             pdf_bytes = f.read()
         b64 = base64.b64encode(pdf_bytes).decode()

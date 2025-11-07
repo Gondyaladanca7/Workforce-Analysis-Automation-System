@@ -1,3 +1,4 @@
+# utils/database.py
 import sqlite3
 import pandas as pd
 from typing import Optional
@@ -7,7 +8,6 @@ DB_PATH = "data/workforce.db"
 # -----------------------------
 # Database Initialization
 # -----------------------------
-
 def initialize_database():
     """Create employees table if not exists"""
     conn = sqlite3.connect(DB_PATH)
@@ -70,7 +70,6 @@ def initialize_task_table():
 # -----------------------------
 # Employee Functions
 # -----------------------------
-
 def fetch_employees() -> pd.DataFrame:
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query("SELECT * FROM employees", conn)
@@ -78,13 +77,9 @@ def fetch_employees() -> pd.DataFrame:
     return df
 
 def add_employee(emp_dict: dict):
-    """
-    Add employee.
-    emp_dict keys: Name, Age, Gender, Department, Role, Skills, Join_Date, Resign_Date, Status, Salary, Location
-    """
+    """Add a new employee"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Auto-generate Emp_ID
     cursor.execute("SELECT MAX(Emp_ID) FROM employees")
     max_id = cursor.fetchone()[0]
     new_id = (max_id or 0) + 1
@@ -114,11 +109,8 @@ def delete_employee(emp_id: int):
     """Delete employee and cascade to mood_logs and tasks"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Delete moods
     cursor.execute("DELETE FROM mood_logs WHERE emp_id=?", (emp_id,))
-    # Delete tasks
     cursor.execute("DELETE FROM tasks WHERE emp_id=?", (emp_id,))
-    # Delete employee
     cursor.execute("DELETE FROM employees WHERE Emp_ID=?", (emp_id,))
     conn.commit()
     conn.close()
@@ -126,25 +118,16 @@ def delete_employee(emp_id: int):
 # -----------------------------
 # Mood Functions
 # -----------------------------
-
 def add_mood_entry(emp_id: int, mood: str, log_date: str):
-    """
-    Add mood entry
-    mood: 'Happy', 'Neutral', 'Sad', 'Angry'
-    log_date: 'YYYY-MM-DD'
-    """
+    """Log mood for an employee"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # Optional: replace mood if already exists for the day
-    cursor.execute("""
-        SELECT id FROM mood_logs WHERE emp_id=? AND log_date=?
-    """, (emp_id, log_date))
+    cursor.execute("SELECT id FROM mood_logs WHERE emp_id=? AND log_date=?", (emp_id, log_date))
     existing = cursor.fetchone()
     if existing:
         cursor.execute("UPDATE mood_logs SET mood=? WHERE id=?", (mood, existing[0]))
     else:
-        cursor.execute("INSERT INTO mood_logs (emp_id, mood, log_date) VALUES (?, ?, ?)",
-                       (emp_id, mood, log_date))
+        cursor.execute("INSERT INTO mood_logs (emp_id, mood, log_date) VALUES (?, ?, ?)", (emp_id, mood, log_date))
     conn.commit()
     conn.close()
 
@@ -157,11 +140,12 @@ def fetch_mood_logs() -> pd.DataFrame:
 # -----------------------------
 # Task Functions
 # -----------------------------
-
 def add_task(task_name: str, emp_id: int, assigned_by: str, due_date: str,
              status: str = "Pending", remarks: str = "", created_date: str = ""):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    if not created_date:
+        created_date = date.today().strftime("%Y-%m-%d")
     cursor.execute("""
         INSERT INTO tasks (task_name, emp_id, assigned_by, due_date, status, remarks, created_date)
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -181,9 +165,7 @@ def fetch_tasks(emp_id: Optional[int] = None) -> pd.DataFrame:
 def update_task_status(task_id: int, new_status: str, remarks: str = ""):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE tasks SET status=?, remarks=? WHERE task_id=?
-    """, (new_status, remarks, task_id))
+    cursor.execute("UPDATE tasks SET status=?, remarks=? WHERE task_id=?", (new_status, remarks, task_id))
     conn.commit()
     conn.close()
 
