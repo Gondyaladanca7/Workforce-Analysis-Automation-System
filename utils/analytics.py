@@ -1,28 +1,56 @@
 import pandas as pd
 
-# ------------------------- Summary Functions
-def get_summary(df: pd.DataFrame):
+# -----------------------------
+# Analytics Functions
+# -----------------------------
+
+def get_summary(df: pd.DataFrame) -> dict:
+    """
+    Returns summary metrics:
+    total employees, active employees, resigned employees
+    """
     total = len(df)
-    active = len(df[df["Status"]=="Active"])
-    resigned = len(df[df["Status"]=="Resigned"])
-    return total, active, resigned
+    active = len(df[df["Status"] == "Active"]) if "Status" in df.columns else total
+    resigned = len(df[df["Status"] == "Resigned"]) if "Status" in df.columns else 0
+    return {
+        "total": total,
+        "active": active,
+        "resigned": resigned
+    }
 
-# ------------------------- Department Distribution
-def department_distribution(df: pd.DataFrame):
-    if "Department" in df.columns and not df.empty:
+def department_distribution(df: pd.DataFrame) -> pd.Series:
+    """
+    Returns counts of employees per department
+    """
+    if "Department" in df.columns:
         return df["Department"].value_counts()
-    return pd.Series(dtype=int)
+    else:
+        return pd.Series(dtype=int)
 
-# ------------------------- Gender Ratio
-def gender_ratio(df: pd.DataFrame):
-    if "Gender" in df.columns and not df.empty:
-        df = df[df["Gender"].isin(["Male","Female"])]  # Ensure only Male/Female
+def gender_ratio(df: pd.DataFrame) -> pd.Series:
+    """
+    Returns counts of employees per gender
+    """
+    if "Gender" in df.columns:
         return df["Gender"].value_counts()
-    return pd.Series(dtype=int)
+    else:
+        return pd.Series(dtype=int)
 
-# ------------------------- Average Salary by Department
-def average_salary_by_dept(df: pd.DataFrame):
-    if "Department" in df.columns and "Salary" in df.columns and not df.empty:
-        avg_salary = df.groupby("Department")["Salary"].mean().sort_values()
-        return avg_salary
-    return pd.Series(dtype=float)
+def average_salary_by_dept(df: pd.DataFrame) -> pd.Series:
+    """
+    Returns average salary per department
+    """
+    if "Department" in df.columns and "Salary" in df.columns:
+        return df.groupby("Department")["Salary"].mean()
+    else:
+        return pd.Series(dtype=float)
+
+def skills_distribution(df: pd.DataFrame) -> pd.Series:
+    """
+    Returns counts of all skills across employees
+    """
+    if "Skills" in df.columns:
+        skills_series = df["Skills"].dropna().str.split(",", expand=True).stack()
+        return skills_series.value_counts()
+    else:
+        return pd.Series(dtype=int)

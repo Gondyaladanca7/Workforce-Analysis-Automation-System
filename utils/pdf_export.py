@@ -1,112 +1,115 @@
-# utils/pdf_export.py
+import io
 from fpdf import FPDF
-import pandas as pd
-from io import BytesIO
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-from utils import database as db
 
-sns.set_style("whitegrid")
+# -----------------------------
+# PDF Helper Class
+# -----------------------------
 
-def fig_to_image_bytes(fig):
-    buf = BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight')
-    buf.seek(0)
-    plt.close(fig)
-    return buf
+class PDFExporter:
+    def __init__(self, pdf_path):
+        self.pdf_path = pdf_path
+        self.pdf = FPDF()
+        self.pdf.set_auto_page_break(auto=True, margin=15)
+    
+    def add_title(self, title):
+        self.pdf.set_font("Arial", "B", 16)
+        self.pdf.add_page()
+        self.pdf.cell(0, 10, title, ln=True, align="C")
+        self.pdf.ln(10)
+    
+    def add_table(self, df: pd.DataFrame, title: str = ""):
+        if title:
+            self.pdf.set_font("Arial", "B", 14)
+            self.pdf.cell(0, 10, title, ln=True)
+            self.pdf.ln(5)
+        
+        # Table header
+        self.pdf.set_font("Arial", "B", 10)
+        col_widths = [max(30, self.pdf.get_string_width(str(col)) + 4) for col in df.columns]
+        for i, col in enumerate(df.columns):
+            self.pdf.cell(col_widths[i], 8, str(col), border=1, align='C')
+        self.pdf.ln()
+        
+        # Table rows
+        self.pdf.set_font("Arial", "", 10)
+        for _, row in df.iterrows():
+            for i, col in enumerate(df.columns):
+                text = str(row[col])
+                self.pdf.cell(col_widths[i], 8, text, border=1)
+            self.pdf.ln()
+        self.pdf.ln(5)
+    
+    def add_chart(self, fig: plt.Figure, title: str = ""):
+        """Convert Matplotlib figure to image and embed in PDF"""
+        buf = io.BytesIO()
+        fig.savefig(buf, format="PNG", bbox_inches='tight')
+        buf.seek(0)
+        self.pdf.ln(5)
+        if title:
+            self.pdf.set_font("Arial", "B", 14)
+            self.pdf.cell(0, 10, title, ln=True)
+        self.pdf.image(buf, x=None, y=None, w=180)
+        plt.close(fig)
+        self.pdf.ln(5)
+    
+    def save_pdf(self):
+        self.pdf.output(self.pdf_path)
 
-def generate_summary_pdf(pdf_path: str, total: int, active: int, resigned: int, df: pd.DataFrame):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "Workforce Summary Report", ln=True, align="C")
-    pdf.ln(5)
+# -----------------------------
+# Export Function
+# -----------------------------
 
-    # Employee summary
-    pdf.set_font("Arial", 'B', 12)
-    pdf.cell(0, 8, f"Total Employees: {total}", ln=True)
-    pdf.cell(0, 8, f"Active Employees: {active}", ln=True)
-    pdf.cell(0, 8, f"Resigned Employees: {resigned}", ln=True)
-    pdf.ln(5)
-
-    # Department distribution
-    if not df.empty and "Department" in df.columns:
-        dept_counts = df['Department'].value_counts()
-        fig, ax = plt.subplots(figsize=(6,3))
-        sns.barplot(x=dept_counts.index, y=dept_counts.values, palette="viridis", ax=ax)
-        ax.set_ylabel("Employees")
-        ax.set_xlabel("Department")
+def generate_summary_pdf(pdf_path: str, total_employees: int, active_employees: int, resigned_employees: int, df: pd.DataFrame):
+    """
+    pdf_path: file to save PDF
+    total_employees, active_employees, resigned_employees: summary numbers
+    df: filtered employee/task/mood data
+    """
+    pdf = PDFExporter(pdf_path)
+    pdf.add_title("Workforce Summary Report")
+    
+    # Add basic summary
+    summary_df = pd.DataFrame({
+        "Metric": ["Total Employees", "Active Employees", "Resigned Employees"],
+        "Count": [total_employees, active_employees, resigned_employees]
+    })
+    pdf.add_table(summary_df, title="Summary")
+    
+    # Department distribution chart
+    if "Department" in df.columns:
+        dept_counts = df["Department"].value_counts()
+        fig, ax = plt.subplots(figsize=(6,4))
+        sns.barplot(x=dept_counts.index, y=dept_counts.values, palette="coolwarm", ax=ax)
         ax.set_title("Employees per Department")
-        img_buf = fig_to_image_bytes(fig)
-        pdf.image(img_buf, x=15, w=180)
-        pdf.ln(5)
-
-    # Gender ratio
-    if not df.empty and "Gender" in df.columns:
-        gender_counts = df['Gender'].value_counts()
-        fig, ax = plt.subplots(figsize=(4,4))
-        ax.pie(gender_counts, labels=gender_counts.index, autopct="%1.1f%%", startangle=90, colors=sns.color_palette("pastel"))
-        centre_circle = plt.Circle((0,0),0.70,fc='white')
-        fig.gca().add_artist(centre_circle)
+        ax.set_ylabel("Count")
+        ax.set_xlabel("Department")
+        pdf.add_chart(fig, title="Department Distribution")
+    
+    # Gender ratio chart
+    if "Gender" in df.columns:
+        gender_counts = df["Gender"].value_counts()
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.pie(gender_counts.values, labels=gender_counts.index, autopct='%1.1f%%', colors=sns.color_palette("Set2"))
         ax.set_title("Gender Ratio")
-        img_buf = fig_to_image_bytes(fig)
-        pdf.image(img_buf, x=50, w=100)
-        pdf.ln(5)
-
-    # Average salary by department (horizontal bar to match dashboard)
-    if not df.empty and "Salary" in df.columns and "Department" in df.columns:
-        avg_salary = df.groupby("Department")["Salary"].mean().sort_values()
-        fig, ax = plt.subplots(figsize=(6,3))
-        sns.barplot(x=avg_salary.values, y=avg_salary.index, palette="magma", ax=ax)
-        ax.set_xlabel("Average Salary")
-        ax.set_ylabel("Department")
-        ax.set_title("Average Salary by Department")
-        img_buf = fig_to_image_bytes(fig)
-        pdf.image(img_buf, x=15, w=180)
-        pdf.ln(5)
-
-    # Mood Analytics
-    mood_df = db.fetch_mood_logs()
-    if not mood_df.empty and not df.empty:
-        merged = pd.merge(mood_df, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="inner")
-        merged['Mood_Label'] = merged['mood'].replace({"😊 Happy":"Happy","😐 Neutral":"Neutral","😔 Sad":"Sad","😡 Angry":"Angry"})
-        mood_score_map = {"Happy":5,"Neutral":3,"Sad":2,"Angry":1}
-        merged['Mood_Score'] = merged['Mood_Label'].map(mood_score_map).astype(int)
-
-        # Average mood per employee
-        avg_mood = merged.groupby("Name")["Mood_Score"].mean().round(0).astype(int).sort_values()
-        fig, ax = plt.subplots(figsize=(6,3))
-        sns.barplot(x=avg_mood.values, y=avg_mood.index, palette="coolwarm", ax=ax)
-        for i, v in enumerate(avg_mood.values):
-            ax.text(v + 0.1, i, str(v), color='black', va='center')
-        ax.set_xlabel("Average Mood Score (1-5)")
-        ax.set_ylabel("Employee")
-        ax.set_title("Average Mood per Employee")
-        img_buf = fig_to_image_bytes(fig)
-        pdf.image(img_buf, x=15, w=180)
-        pdf.ln(5)
-
-        # Overall mood distribution
-        mood_counts = merged['Mood_Label'].value_counts()
-        fig, ax = plt.subplots(figsize=(4,4))
-        ax.pie(mood_counts, labels=mood_counts.index, autopct="%1.0f", startangle=90, colors=sns.color_palette("Set2"))
-        ax.set_title("Overall Team Mood")
-        img_buf = fig_to_image_bytes(fig)
-        pdf.image(img_buf, x=50, w=100)
-        pdf.ln(5)
-
-        # Mood trend over time
-        fig, ax = plt.subplots(figsize=(6,3))
-        for name, group in merged.groupby("Name"):
-            group_sorted = group.sort_values(by="log_date")
-            ax.plot(group_sorted["log_date"], group_sorted["Mood_Score"], marker='o', label=name)
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Mood Score (1-5)")
-        ax.set_title("Mood Trend Over Time")
-        ax.legend(fontsize=6)
-        plt.xticks(rotation=45)
-        img_buf = fig_to_image_bytes(fig)
-        pdf.image(img_buf, x=15, w=180)
-        pdf.ln(5)
-
-    pdf.output(pdf_path)
+        pdf.add_chart(fig, title="Gender Ratio")
+    
+    # Skills distribution (if exists)
+    if "Skills" in df.columns:
+        skills_series = df["Skills"].dropna().str.split(",", expand=True).stack()
+        skills_counts = skills_series.value_counts()
+        if not skills_counts.empty:
+            fig, ax = plt.subplots(figsize=(6,4))
+            sns.barplot(x=skills_counts.values, y=skills_counts.index, palette="coolwarm", ax=ax)
+            ax.set_xlabel("Count")
+            ax.set_ylabel("Skill")
+            ax.set_title("Skill Distribution")
+            pdf.add_chart(fig, title="Skills Distribution")
+    
+    # Add employee table
+    pdf.add_table(df, title="Employee Details / Tasks")
+    
+    # Save PDF
+    pdf.save_pdf()
