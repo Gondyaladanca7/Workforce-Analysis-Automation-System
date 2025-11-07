@@ -1,24 +1,30 @@
 # auth.py
 """
-Handles authentication and role-based access control
+Authentication and Role-based Access Control
 """
 
 import streamlit as st
 import bcrypt
 
-# ------------------------- Predefined user roles
+# -------------------------
+# Predefined users
+# Passwords stored in plaintext for simplicity (replace with hashed in production)
 USERS = {
     "admin": {"password": "admin123", "role": "Admin"},
     "manager": {"password": "manager123", "role": "Manager"},
     "employee": {"password": "employee123", "role": "Employee"},
 }
 
+# -------------------------
+# Password hashing functions
 def hash_password(password: str) -> bytes:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
 def check_password(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed)
 
+# -------------------------
+# Login / Logout
 def login_user():
     st.title("🔐 Login — Workforce Analysis Automation System")
 
@@ -31,7 +37,7 @@ def login_user():
             st.session_state.username = username
             st.session_state.role = USERS[username]["role"]
             st.success(f"Welcome, {username.title()} ({st.session_state.role}) 🎉")
-            st.rerun()  # modern Streamlit rerun (no experimental)
+            st.experimental_rerun()
         else:
             st.error("Invalid credentials. Please try again.")
 
@@ -40,15 +46,24 @@ def logout_user():
         st.session_state.logged_in = False
         st.session_state.username = None
         st.session_state.role = None
-        st.rerun()
+        st.experimental_rerun()
 
-def require_login():
-    """If not logged in, show login page"""
-    if "logged_in" not in st.session_state or not st.session_state.logged_in:
-        login_user()
-        st.stop()
+# -------------------------
+# Require login decorator
+def require_login(func):
+    """
+    Decorator to protect pages: user must be logged in
+    """
+    def wrapper(*args, **kwargs):
+        if "logged_in" not in st.session_state or not st.session_state.logged_in:
+            login_user()
+            st.stop()
+        return func(*args, **kwargs)
+    return wrapper
 
+# -------------------------
+# Sidebar Role Badge
 def show_role_badge():
-    """Show role indicator in sidebar"""
-    if "role" in st.session_state:
+    """Show logged-in user and role in sidebar"""
+    if "username" in st.session_state and "role" in st.session_state:
         st.sidebar.info(f"👤 Logged in as: **{st.session_state.username.title()} ({st.session_state.role})**")
