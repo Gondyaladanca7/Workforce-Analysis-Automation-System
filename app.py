@@ -60,7 +60,8 @@ try:
 except Exception as e:
     st.error("Failed to load employees from DB.")
     st.exception(e)
-    df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"])
+    df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role","Skills",
+                               "Join_Date","Resign_Date","Status","Salary","Location"])
 
 # -------------------------
 # Sidebar Filters & CSV Upload
@@ -174,10 +175,12 @@ st.metric("Total Employees", summary["total"])
 st.metric("Active Employees", summary["active"])
 st.metric("Resigned Employees", summary["resigned"])
 
+# Department distribution chart
 st.header("3️⃣ Department Distribution")
 if not filtered_df.empty and "Department" in filtered_df.columns:
     st.bar_chart(department_distribution(filtered_df))
 
+# Gender ratio pie chart
 st.header("4️⃣ Gender Ratio")
 if not filtered_df.empty and "Gender" in filtered_df.columns:
     gender_ser = gender_ratio(filtered_df)
@@ -186,6 +189,7 @@ if not filtered_df.empty and "Gender" in filtered_df.columns:
     ax.axis("equal")
     st.pyplot(fig)
 
+# Average salary chart
 st.header("5️⃣ Average Salary by Department")
 if not filtered_df.empty and "Salary" in filtered_df.columns and "Department" in filtered_df.columns:
     st.bar_chart(average_salary_by_dept(filtered_df))
@@ -234,7 +238,7 @@ if role in ("Admin","Manager"):
         task_name = st.text_input("Task title")
         emp_choice = st.selectbox("Assign To", df["Emp_ID"].astype(str)+" - "+df["Name"])
         emp_id_for_task = int(emp_choice.split(" - ")[0])
-        due_date = st.date_input("Due date", value=datetime.date.today())
+        due_date = st.date_input("Due date", value=date.today())  # fixed
         remarks = st.text_area("Remarks")
         assign_submit = st.form_submit_button("Assign Task")
         if assign_submit:
@@ -252,7 +256,7 @@ try:
 except:
     tasks_df = pd.DataFrame()
 if not tasks_df.empty:
-    tasks_df["overdue"] = pd.to_datetime(tasks_df["due_date"], errors="coerce")<datetime.date.today()
+    tasks_df["overdue"] = pd.to_datetime(tasks_df["due_date"], errors="coerce") < date.today()  # fixed
     emp_map = df.set_index("Emp_ID")["Name"].to_dict()
     tasks_df["Employee"] = tasks_df["emp_id"].map(emp_map)
     st.dataframe(tasks_df[["task_id","task_name","Employee","assigned_by","due_date","status","remarks","overdue"]], height=300)
@@ -295,7 +299,8 @@ st.header("📄 Export")
 if role in ("Admin","Manager"):
     if st.button("Download Summary PDF"):
         pdf_path = "workforce_summary_report.pdf"
-        generate_summary_pdf(pdf_path, summary["total"], summary["active"], summary["resigned"], filtered_df)
+        # generate PDF with only summary metrics + mood stats
+        generate_summary_pdf(pdf_path, summary["total"], summary["active"], summary["resigned"], mood_display)
         with open(pdf_path, "rb") as f:
             pdf_bytes = f.read()
         b64 = base64.b64encode(pdf_bytes).decode()

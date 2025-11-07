@@ -1,91 +1,67 @@
-import io
-from fpdf import FPDF
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
+# utils/pdf_export.py
 
-sns.set_style("whitegrid")
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
 
-# -----------------------------
-# PDF Helper Class
-# -----------------------------
-class PDFExporter:
-    def __init__(self, pdf_path):
-        self.pdf_path = pdf_path
-        self.pdf = FPDF()
-        self.pdf.set_auto_page_break(auto=True, margin=15)
-    
-    def add_title(self, title):
-        self.pdf.set_font("Arial", "B", 16)
-        self.pdf.add_page()
-        self.pdf.cell(0, 10, title, ln=True, align="C")
-        self.pdf.ln(10)
-    
-    def add_table(self, df: pd.DataFrame, title: str = ""):
-        if title:
-            self.pdf.set_font("Arial", "B", 14)
-            self.pdf.cell(0, 10, title, ln=True)
-            self.pdf.ln(5)
-        
-        self.pdf.set_font("Arial", "B", 10)
-        col_widths = [max(30, self.pdf.get_string_width(str(col)) + 4) for col in df.columns]
-        for i, col in enumerate(df.columns):
-            self.pdf.cell(col_widths[i], 8, str(col), border=1, align='C')
-        self.pdf.ln()
-        
-        self.pdf.set_font("Arial", "", 10)
-        for _, row in df.iterrows():
-            for i, col in enumerate(df.columns):
-                self.pdf.cell(col_widths[i], 8, str(row[col]), border=1)
-            self.pdf.ln()
-        self.pdf.ln(5)
-    
-    def add_chart(self, fig: plt.Figure, title: str = ""):
-        buf = io.BytesIO()
-        fig.savefig(buf, format="PNG", bbox_inches='tight')
-        buf.seek(0)
-        if title:
-            self.pdf.set_font("Arial", "B", 14)
-            self.pdf.cell(0, 10, title, ln=True)
-        self.pdf.image(buf, x=None, y=None, w=180)
-        plt.close(fig)
-        self.pdf.ln(5)
-    
-    def save_pdf(self):
-        self.pdf.output(self.pdf_path)
+def generate_summary_pdf(file_path, total, active, resigned, mood_df):
+    """
+    Generate a professional PDF summary:
+    - total, active, resigned employees
+    - Mood of employees (latest logs)
+    """
+    c = canvas.Canvas(file_path, pagesize=A4)
+    width, height = A4
 
-# -----------------------------
-# Export Function
-# -----------------------------
-def generate_summary_pdf(pdf_path: str, total_employees: int, active_employees: int, resigned_employees: int, df: pd.DataFrame):
-    pdf = PDFExporter(pdf_path)
-    pdf.add_title("Workforce Summary Report")
-    
-    # Summary table
-    summary_df = pd.DataFrame({
-        "Metric": ["Total Employees", "Active Employees", "Resigned Employees"],
-        "Count": [total_employees, active_employees, resigned_employees]
-    })
-    pdf.add_table(summary_df, title="Summary")
-    
-    # Department Distribution
-    if "Department" in df.columns:
-        dept_counts = df["Department"].value_counts()
-        fig, ax = plt.subplots(figsize=(6,4))
-        sns.barplot(x=dept_counts.index, y=dept_counts.values, palette="coolwarm", ax=ax)
-        ax.set_title("Employees per Department")
-        ax.set_ylabel("Count")
-        ax.set_xlabel("Department")
-        pdf.add_chart(fig, title="Department Distribution")
-    
-    # Gender Ratio
-    if "Gender" in df.columns:
-        gender_counts = df["Gender"].value_counts()
-        fig, ax = plt.subplots(figsize=(6,4))
-        ax.pie(gender_counts.values, labels=gender_counts.index, autopct='%1.1f%%', colors=sns.color_palette("Set2"))
-        ax.set_title("Gender Ratio")
-        pdf.add_chart(fig, title="Gender Ratio")
-    
-    # Employee Table
-    pdf.add_table(df, title="Employee Details")
-    pdf.save_pdf()
+    # Title
+    c.setFont("Helvetica-Bold", 20)
+    c.drawCentredString(width/2, height-50, "Workforce Summary Report")
+
+    # Summary metrics
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, height-100, f"Total Employees: {total}")
+    c.drawString(50, height-120, f"Active Employees: {active}")
+    c.drawString(50, height-140, f"Resigned Employees: {resigned}")
+
+    # Mood table header
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, height-180, "Employee Mood (Latest Logs)")
+
+    if mood_df is not None and not mood_df.empty:
+        # Ensure required columns exist
+        for col in ["emp_id","Name","mood","log_date"]:
+            if col not in mood_df.columns:
+                mood_df[col] = "NA"
+
+        # Prepare table data
+        table_data = [["Emp_ID", "Name", "Mood", "Log Date"]]
+        for _, row in mood_df.head(50).iterrows():  # only top 50 for clarity
+            table_data.append([str(row["emp_id"]), row["Name"], row["mood"], str(row["log_date"])])
+
+        # Create table
+        table = Table(table_data, colWidths=[60, 150, 80, 100])
+        style = TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+            ('TEXTCOLOR',(0,0),(-1,0),colors.black),
+            ('ALIGN',(0,0),(-1,-1),'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 12),
+            ('BOTTOMPADDING', (0,0), (-1,0), 8),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.black)
+        ])
+        table.setStyle(style)
+
+        # Draw table
+        table.wrapOn(c, width, height)
+        table.drawOn(c, 50, height-450)  # adjust vertical position
+
+    else:
+        c.setFont("Helvetica", 12)
+        c.drawString(50, height-200, "No mood data available.")
+
+    # Footer
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(50, 50, "Generated by Workforce Analytics System")
+
+    c.save()

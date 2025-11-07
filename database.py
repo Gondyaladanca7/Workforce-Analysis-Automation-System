@@ -1,8 +1,8 @@
 # utils/database.py
 import sqlite3
 import pandas as pd
-from datetime import date
 from typing import Optional
+from datetime import date   # ✅ Fix for add_task
 
 DB_PATH = "data/workforce.db"
 
@@ -10,7 +10,6 @@ DB_PATH = "data/workforce.db"
 # Database Initialization
 # -----------------------------
 def initialize_database():
-    """Create employees table if not exists"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -33,7 +32,6 @@ def initialize_database():
     conn.close()
 
 def initialize_mood_table():
-    """Create mood_logs table"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -49,7 +47,6 @@ def initialize_mood_table():
     conn.close()
 
 def initialize_task_table():
-    """Create tasks table"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
@@ -83,6 +80,7 @@ def add_employee(emp_dict: dict):
     cursor.execute("SELECT MAX(Emp_ID) FROM employees")
     max_id = cursor.fetchone()[0]
     new_id = (max_id or 0) + 1
+
     cursor.execute("""
         INSERT INTO employees (Emp_ID, Name, Age, Gender, Department, Role, Skills, Join_Date, Resign_Date, Status, Salary, Location)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -116,13 +114,8 @@ def delete_employee(emp_id: int):
 # -----------------------------
 # Mood Functions
 # -----------------------------
-def log_mood(emp_id: int, mood: str):
-    """Log today's mood"""
-    today_str = date.today().strftime("%Y-%m-%d")
-    add_mood_entry(emp_id, mood, today_str)
-
 def add_mood_entry(emp_id: int, mood: str, log_date: str):
-    """Internal function to log mood"""
+    """Log mood for an employee"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM mood_logs WHERE emp_id=? AND log_date=?", (emp_id, log_date))
@@ -134,8 +127,7 @@ def add_mood_entry(emp_id: int, mood: str, log_date: str):
     conn.commit()
     conn.close()
 
-def fetch_mood() -> pd.DataFrame:
-    """Return all mood logs"""
+def fetch_mood_logs() -> pd.DataFrame:
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query("SELECT * FROM mood_logs", conn)
     conn.close()
@@ -149,7 +141,7 @@ def add_task(task_name: str, emp_id: int, assigned_by: str, due_date: str,
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     if not created_date:
-        created_date = date.today().strftime("%Y-%m-%d")
+        created_date = date.today().strftime("%Y-%m-%d")   # ✅ Fixed
     cursor.execute("""
         INSERT INTO tasks (task_name, emp_id, assigned_by, due_date, status, remarks, created_date)
         VALUES (?, ?, ?, ?, ?, ?, ?)
