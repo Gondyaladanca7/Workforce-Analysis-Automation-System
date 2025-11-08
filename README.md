@@ -1,54 +1,77 @@
+Perfect bro ✅ — here’s your **updated, complete and professional `README.md`**, rewritten to include your **latest features (mood tracking, task management, feedback system, role-based access, Streamlit structure, and database)**.
+You can **replace your current README.md** fully with this version.
 
-# 🌟 Workforce Analytics & Employee Management System
+---
 
-![One Piece GIF](./assets/onepiece.gif)
+# 🌟 Workforce Analysis & Employee Management System
+
+![Workforce GIF](./assets/onepiece.gif)
+
+---
 
 ## 📌 Project Overview
 
-The **Workforce Analytics & Employee Management System** is a modern, interactive solution for managing employee records, analyzing workforce data in real-time, and generating professional reports.
+The **Workforce Analysis & Employee Management System** is a modern, data-driven web application built with **Streamlit**.
+It enables organizations to **manage employees, assign tasks, track moods, collect peer feedback, and analyze workforce performance** — all in one dashboard.
 
-It combines **employee management**, **analytics dashboards**, and **role-based access** to help organizations make informed HR and operational decisions.
+It combines:
+
+* 🧭 **Role-based Access (Admin / Manager / Employee)**
+* 📊 **Analytics Dashboards**
+* 🧾 **PDF Reporting**
+* 💬 **Feedback & Mood Tracking**
 
 ---
 
 ## 🔑 Key Features
 
-* **Role-Based Login**: Secure access for Admin (currently implemented), HR, and Employee roles.
-* **Employee Management**: Add, edit, delete, and search employee records with ease.
-* **CSV Upload & Import**: Bulk import employee data from CSV files safely, with automatic handling of missing columns.
-* **Filters & Sorting**: Filter employees by Department, Role, Status, Gender, Skills; search and sort by multiple criteria.
-* **Interactive Analytics**:
-  * Total employees summary
-  * Department-wise employee count
-  * Gender ratio visualization
-  * Average salary by department
-* **PDF Export**: Generate downloadable summary reports.
-* **Sample Data Generator**: Quickly generate 200 realistic employee records for testing and demo purposes.
+### 👥 **Role-Based Login**
+
+* Secure authentication for **Admin**, **Manager**, and **Employee** roles.
+* Each role has dedicated permissions and dashboards.
+
+| Role         | Permissions                                                              |
+| ------------ | ------------------------------------------------------------------------ |
+| **Admin**    | Manage all employees, tasks, moods, and feedback. Access full analytics. |
+| **Manager**  | Assign tasks, give feedback to employees, and view team analytics.       |
+| **Employee** | Update mood, view assigned tasks, and give peer feedback.                |
+
+---
+
+### 📋 **Core Functionalities**
+
+✅ **Employee Management** – Add, edit, delete, and search employees easily.
+✅ **Task Management** – Assign and track employee tasks with deadlines and remarks.
+✅ **Mood Tracking** – Employees log daily mood entries with optional notes.
+✅ **Feedback System** – Peer-to-peer feedback with message and rating (1–5).
+✅ **CSV Upload** – Bulk import employee data safely with column validation.
+✅ **Analytics Dashboard** – View summaries for total employees, tasks, moods, and ratings.
+✅ **PDF Export** – Generate professional employee summary or report files.
 
 ---
 
 ## ⚙️ Setup & Installation
 
-1. **Clone the Repository**
+### 1️⃣ Clone the Repository
 
 ```bash
-git clone <your-repo-link>
-cd workforce-project
-````
+git clone https://github.com/Gondyaladanca7/Workforce-Analytics-Collab.git
+cd Workforce-Analytics-Collab
+```
 
-2. **Install Dependencies**
+### 2️⃣ Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Run the Application**
+### 3️⃣ Run the Application
 
 ```bash
 streamlit run app.py
 ```
 
-4. **Generate Sample Data (Optional)**
+### 4️⃣ Initialize or Generate Sample Data (Optional)
 
 ```bash
 python generate_sample_data.py
@@ -56,57 +79,89 @@ python generate_sample_data.py
 
 ---
 
-## 📝 Assumptions & Design Choices
+## 🧱 Database Schema
 
-* **Predefined User Roles**: Admin implemented; HR and Employee roles can be extended.
-* **Interactive UI**: Built using Streamlit for an intuitive experience.
-* **Data Storage**: SQLite database (`workforce.db`) with optional CSV imports.
-* **Robust Error Handling**: Missing columns, invalid data, and ID collisions are automatically handled.
-* **Design Focus**: Clean, scalable, and easily extendable for future AI-driven features.
+**Database File:** `data/workforce.db`
 
----
-
-## 💡 Why This Project is Unique
-
-* Combines **employee management** with **real-time analytics dashboards**.
-* Supports **bulk data import** from CSV safely.
-* Provides **visual insights** into workforce distribution and salary metrics.
-* **PDF export** for professional reporting and record-keeping.
-* Lightweight, scalable, and easy to extend with future AI and HR features.
+| Table         | Key Columns                                                    |
+| ------------- | -------------------------------------------------------------- |
+| **employees** | Emp_ID, Name, Department, Role, Skills, Salary, Status         |
+| **tasks**     | task_id, task_name, emp_id, assigned_by, due_date, status      |
+| **mood**      | mood_id, emp_id, mood, remarks, log_date                       |
+| **feedback**  | feedback_id, sender_id, receiver_id, message, rating, log_date |
 
 ---
 
-## 📁 Folder Structure
+## 📂 Folder Structure
 
 ```
-workforce-project/
+Workforce-Analysis-Automation-System/
 │
-├─ app.py                     # Main Streamlit application
-├─ generate_sample_data.py     # Script to generate sample employee data
-├─ requirements.txt           # Python dependencies
-├─ utils/                     # Helper functions (PDF export, analytics, database)
-├─ data/                      # CSV and SQLite database files
-├─ assets/                    # Images and GIFs
-├─ tests/                     # Unit & integration test cases
-└─ README.md                  # Project documentation
+├─ app.py                     # Main Streamlit app (handles routing and roles)
+├─ auth.py                    # Authentication logic
+├─ create_pages.py            # Page creation helpers
+├─ database.py                # Database functions (CRUD for all tables)
+├─ requirements.txt           # Dependencies
+├─ README.md                  # Documentation
+│
+├─ data/
+│  └─ workforce.db            # SQLite database
+│
+├─ pages/
+│  ├─ feedback.py             # Feedback page
+│  ├─ mood.py                 # Mood update page
+│  ├─ tasks.py                # Task management page
+│  └─ analytics.py            # Dashboard page
+│
+├─ utils/
+│  ├─ __init__.py
+│  └─ pdf_export.py           # PDF and report generation
+│
+├─ assets/
+│  └─ onepiece.gif            # GIF or logo
+│
+└─ database/
+   └─ (optional setup scripts)
 ```
 
 ---
 
-## 🚀 Next Steps (Planned Features)
+## 🧠 Design Choices
 
-* AI Skill Radar & Upskilling Suggestions
-* Employee Retention & Attrition Prediction
-* Advanced Dashboards with Project Health Metrics
-* Automated Culture & Burnout Early Warning System
+* **Streamlit UI** for fast development and interactivity.
+* **SQLite** for lightweight local storage.
+* **Role-based control** for secure and clear data segregation.
+* **Modular architecture** with pages and utils.
+* **Error-tolerant CSV handling** and schema validation.
+
+---
+
+## 🚀 Future Enhancements
+
+* AI-driven **skill recommendations** and employee performance predictions.
+* **Automated email notifications** for task updates.
+* **Mood trend visualizations** for HR insights.
+* **Admin reports** exportable as PDF or Excel.
+* **Dark mode UI** and advanced analytics dashboards.
 
 ---
 
 ## ⚡ Quick Start
 
 1. Clone the repo.
-2. Install dependencies.
+2. Install requirements.
 3. Run `streamlit run app.py`.
-4. Use the sidebar to add employees, upload CSV, and explore analytics.
+4. Login as Admin/Manager/Employee to test workflows.
 
--------
+---
+
+## ❤️ Contributors
+
+| Name | Role / Responsibility |
+|------|------------------------|
+| **Govind Lad** | Project Owner, Database & Backend Logic |
+| **Yashraj Mithari** | Feature Development & Role-Based Login |
+| **Aarya Nikam** | UI/UX Enhancements & Frontend Design |
+| **Tanvi Magdum** | Data Analytics & Testing |
+
+Would you like me to include a **GitHub Actions workflow badge + auto-deploy instructions** (so your app auto-runs on Streamlit Cloud or GitHub Pages)? It’ll make your README look even more professional.
