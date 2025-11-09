@@ -1,11 +1,11 @@
 """
 Workforce Analytics & Employee Management System
-Single-entry app that routes by role (uses auth.py)
+Single-entry app that routes by role (uses utils/auth.py)
 Features:
- - Role-based login (auth.py)
+ - Role-based login
  - Employee management (add/delete)
  - Mood tracker + analytics
- - Task management (assign/update/overdue)
+ - Task management
  - PDF export
 """
 
@@ -13,12 +13,10 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import base64
 import datetime
-
-# Local modules
-from auth import require_login, logout_user, show_role_badge
+import random
 from utils import database as db
+from utils.auth import require_login, logout_user, show_role_badge
 from utils.analytics import get_summary, department_distribution, gender_ratio, average_salary_by_dept
 from utils.pdf_export import generate_summary_pdf
 
@@ -30,6 +28,16 @@ sns.set_style("whitegrid")
 st.set_page_config(page_title="Workforce Analytics System", page_icon="👩‍💼", layout="wide")
 
 # -------------------------
+# Initialize DB tables
+# -------------------------
+try:
+    db.initialize_all_tables()
+except Exception as e:
+    st.error("Failed to initialize database tables.")
+    st.exception(e)
+    st.stop()
+
+# -------------------------
 # Require login
 # -------------------------
 require_login()
@@ -38,16 +46,6 @@ logout_user()
 
 role = st.session_state.get("role", "Employee")
 username = st.session_state.get("user", "unknown")
-
-# -------------------------
-# Initialize DB tables
-# -------------------------
-try:
-    db.initialize_all_tables()  # ✅ initializes employees, moods, tasks, and default users
-except Exception as e:
-    st.error("Failed to initialize database tables.")
-    st.exception(e)
-    st.stop()
 
 # -------------------------
 # Load employee data
@@ -61,6 +59,90 @@ except Exception as e:
         "Emp_ID","Name","Age","Gender","Department","Role","Skills",
         "Join_Date","Resign_Date","Status","Salary","Location"
     ])
+
+# -------------------------
+# Auto-generate realistic employees if DB empty
+# -------------------------
+if df.empty:
+    st.info("No employees found. Generating realistic workforce data...")
+    
+    def generate_realistic_employees(n=1000):
+        employees = []
+        departments = ["HR", "IT", "Sales", "Finance", "Marketing", "Support"]
+        roles_by_dept = {
+            "HR": ["HR Manager", "HR Executive"],
+            "IT": ["Developer", "SysAdmin", "IT Manager"],
+            "Sales": ["Sales Executive", "Sales Manager"],
+            "Finance": ["Accountant", "Finance Manager"],
+            "Marketing": ["Marketing Executive", "Marketing Manager"],
+            "Support": ["Support Executive", "Support Manager"]
+        }
+        skills_pool = ["Python", "Excel", "SQL", "PowerPoint", "Communication", "Management", "Leadership", "JavaScript"]
+
+        names_male = ["John","Alex","Michael","David","Robert","James","William","Daniel","Joseph","Mark"]
+        names_female = ["Anna","Emily","Sophia","Olivia","Linda","Grace","Chloe","Emma","Sarah","Laura"]
+
+        for i in range(1, n+1):
+            gender = random.choices(["Male","Female"], weights=[0.65,0.35])[0]
+            name = random.choice(names_male if gender=="Male" else names_female)
+            dept = random.choice(departments)
+            role_choice = random.choice(roles_by_dept[dept])
+
+            if "Manager" in role_choice:
+                age = random.randint(35, 60)
+            elif "Executive" in role_choice:
+                age = random.randint(25, 35)
+            else:
+                age = random.randint(22, 30)
+
+            join_date = datetime.datetime.now() - datetime.timedelta(days=random.randint(365, 365*10))
+            status = random.choices(["Active","Resigned"], weights=[0.75,0.25])[0]
+            if status == "Resigned":
+                min_days = 180
+                max_days = (datetime.datetime.now() - join_date).days
+                if max_days > min_days:
+                    resign_date = join_date + datetime.timedelta(days=random.randint(min_days, max_days))
+                else:
+                    resign_date = ""
+            else:
+                resign_date = ""
+
+            salary_ranges = {
+                "Manager": (90000, 150000),
+                "Executive": (30000, 70000),
+                "Developer": (40000, 100000),
+                "SysAdmin": (40000, 90000),
+                "Accountant": (35000, 80000)
+            }
+            key = "Manager" if "Manager" in role_choice else ("Executive" if "Executive" in role_choice else role_choice)
+            sal_min, sal_max = salary_ranges.get(key, (30000,100000))
+            salary = random.randint(sal_min, sal_max)
+
+            location = random.choice(["Delhi","Mumbai","Bangalore","Chennai","Hyderabad"])
+            skills = ", ".join(random.sample(skills_pool, k=random.randint(2,4)))
+
+            emp = {
+                "Emp_ID": i,
+                "Name": name,
+                "Age": age,
+                "Gender": gender,
+                "Department": dept,
+                "Role": role_choice,
+                "Skills": skills,
+                "Join_Date": join_date.strftime("%Y-%m-%d"),
+                "Resign_Date": resign_date.strftime("%Y-%m-%d") if resign_date else "",
+                "Status": status,
+                "Salary": salary,
+                "Location": location
+            }
+            employees.append(emp)
+        return pd.DataFrame(employees)
+
+    df_generated = generate_realistic_employees(1000)
+    for _, row in df_generated.iterrows():
+        db.add_employee(row.to_dict())
+    df = db.fetch_employees()
+    st.success("✅ Realistic workforce data generated and added to the database.")
 
 # -------------------------
 # Sidebar Controls
@@ -148,7 +230,6 @@ if search_term:
             cond |= display_df[col].astype(str).str.contains(search_term, case=False, na=False)
     display_df = display_df[cond]
 
-# Sorting
 available_sort_cols = [c for c in ["Emp_ID","Name","Age","Salary","Join_Date","Department","Role","Skills"] if c in display_df.columns]
 if not available_sort_cols:
     available_sort_cols = display_df.columns.tolist()
@@ -162,23 +243,7 @@ except Exception:
 cols_to_show = [c for c in ["Emp_ID","Name","Department","Role","Join_Date","Status"] if c in display_df.columns]
 st.dataframe(display_df[cols_to_show], height=420)
 
-# -------------------------
-# Delete Employee
-# -------------------------
-if role=="Admin":
-    st.subheader("🗑️ Delete Employee")
-    delete_id = st.number_input("Enter Employee ID", step=1, format="%d", key="del_emp")
-    if st.button("Delete Employee"):
-        try:
-            if "Emp_ID" in df.columns and int(delete_id) in df["Emp_ID"].astype(int).values:
-                db.delete_employee(int(delete_id))
-                st.success(f"Employee {delete_id} deleted.")
-                st.session_state["refresh_trigger"] = not st.session_state.get("refresh_trigger", False)
-            else:
-                st.warning("Employee not found.")
-        except Exception as e:
-            st.error("Failed to delete employee.")
-            st.exception(e)
+st.markdown("---")
 
 # -------------------------
 # Workforce Summary
@@ -189,29 +254,57 @@ st.metric("Total Employees", summary["total"])
 st.metric("Active Employees", summary["active"])
 st.metric("Resigned Employees", summary["resigned"])
 
+st.markdown("---")
+
 # -------------------------
-# Dashboard Charts (figures for PDF)
+# Dashboard Charts
 # -------------------------
 st.header("3️⃣ Department Distribution")
-dept_fig = None
-if not filtered_df.empty:
-    dept_fig, dept_ser = department_distribution(filtered_df)
-    st.bar_chart(dept_ser)
+if not filtered_df.empty and "Department" in filtered_df.columns:
+    dept_ser = department_distribution(filtered_df)
+    fig, ax = plt.subplots(figsize=(8,5))
+    sns.barplot(x=dept_ser.index, y=dept_ser.values, palette="pastel", ax=ax)
+    ax.set_xlabel("Department")
+    ax.set_ylabel("Number of Employees")
+    ax.set_title("Department-wise Employee Distribution")
+    plt.xticks(rotation=45)
+    st.pyplot(fig, use_container_width=True)
+else:
+    st.info("No Department data available.")
+
+st.markdown("---")
 
 st.header("4️⃣ Gender Ratio")
-gender_fig = None
 if not filtered_df.empty and "Gender" in filtered_df.columns:
     try:
-        gender_fig, gender_ser = gender_ratio(filtered_df)
-        st.pyplot(gender_fig)
+        gender_counts = gender_ratio(filtered_df)
+        fig, ax = plt.subplots(figsize=(6,6))
+        ax.pie(gender_counts.values, labels=gender_counts.index, autopct="%1.1f%%",
+               startangle=90, colors=sns.color_palette("pastel"))
+        ax.axis("equal")
+        ax.set_title("Gender Distribution")
+        st.pyplot(fig, use_container_width=True)
     except Exception:
         st.info("Not enough data to plot gender ratio.")
+else:
+    st.info("No Gender data available.")
+
+st.markdown("---")
 
 st.header("5️⃣ Average Salary by Department")
-salary_fig = None
-if not filtered_df.empty and "Salary" in filtered_df.columns:
-    salary_fig, salary_ser = average_salary_by_dept(filtered_df)
-    st.bar_chart(salary_ser)
+if not filtered_df.empty and "Salary" in filtered_df.columns and "Department" in filtered_df.columns:
+    avg_salary = average_salary_by_dept(filtered_df)
+    fig, ax = plt.subplots(figsize=(8,5))
+    sns.barplot(x=avg_salary.index, y=avg_salary.values, palette="pastel", ax=ax)
+    ax.set_xlabel("Department")
+    ax.set_ylabel("Average Salary")
+    ax.set_title("Average Salary by Department")
+    plt.xticks(rotation=45)
+    st.pyplot(fig, use_container_width=True)
+else:
+    st.info("No Salary or Department data available.")
+
+st.markdown("---")
 
 # -------------------------
 # Add New Employee (Sidebar)
@@ -251,7 +344,7 @@ if role in ("Admin", "Manager"):
                     "Role": role_input or "NA",
                     "Skills": skills or "NA",
                     "Join_Date": str(join_date),
-                    "Resign_Date": str(resign_date) if status == "Resigned" else "",
+                    "Resign_Date": str(resign_date) if status=="Resigned" else "",
                     "Status": status,
                     "Salary": float(salary),
                     "Location": location or "NA"
@@ -264,141 +357,15 @@ if role in ("Admin", "Manager"):
                 st.exception(e)
 
 # -------------------------
-# Task Management
-# -------------------------
-st.header("6️⃣ Task Management")
-if role in ("Admin", "Manager"):
-    st.subheader("Assign Task")
-    with st.form("assign_task_form"):
-        task_name = st.text_input("Task title")
-        emp_opts = df["Emp_ID"].astype(str) + " - " + df["Name"] if not df.empty else []
-        emp_choice = st.selectbox("Assign To", emp_opts)
-        emp_id_for_task = int(emp_choice.split(" - ")[0]) if emp_choice else None
-        due_date = st.date_input("Due date", value=datetime.date.today())
-        remarks = st.text_area("Remarks")
-        assign_submit = st.form_submit_button("Assign Task")
-
-        if assign_submit:
-            if not task_name or emp_id_for_task is None:
-                st.warning("Task title and assignee are required.")
-            else:
-                try:
-                    db.add_task(task_name=task_name, emp_id=emp_id_for_task,
-                                assigned_by=username, due_date=due_date.strftime("%Y-%m-%d"),
-                                remarks=remarks or "")
-                    st.success("Task assigned successfully.")
-                    st.session_state["refresh_trigger"] = not st.session_state.get("refresh_trigger", False)
-                except Exception as e:
-                    st.error("Failed to assign task.")
-                    st.exception(e)
-
-st.subheader("All Tasks")
-try:
-    tasks_df = db.fetch_tasks()
-except Exception:
-    tasks_df = pd.DataFrame()
-
-if not tasks_df.empty:
-    tasks_df["due_date_parsed"] = pd.to_datetime(tasks_df["due_date"], errors="coerce").dt.date
-    today = pd.Timestamp.today().date()
-    tasks_df["overdue"] = tasks_df["due_date_parsed"].apply(lambda d: (d < today) if pd.notna(d) else False)
-    emp_map = df.set_index("Emp_ID")["Name"].to_dict() if not df.empty else {}
-    tasks_df["Employee"] = tasks_df["emp_id"].map(emp_map).fillna(tasks_df["emp_id"].astype(str))
-    display_cols = [c for c in ["task_id","task_name","Employee","assigned_by","due_date","status","remarks","overdue"] if c in tasks_df.columns]
-    st.dataframe(tasks_df[display_cols], height=300)
-
-    # Task Analytics
-    st.subheader("Task Analytics")
-    if "status" in tasks_df.columns:
-        status_counts = tasks_df["status"].value_counts()
-        fig, ax = plt.subplots(figsize=(5,3))
-        ax.pie(status_counts.values, labels=[f"{s} ({c})" for s,c in zip(status_counts.index, status_counts.values)],
-               startangle=90)
-        ax.axis("equal")
-        st.pyplot(fig)
-else:
-    st.info("No tasks found.")
-
-# -------------------------
-# Mood Tracker
-# -------------------------
-st.header("7️⃣ Employee Mood (Pulse)")
-emp_opts = df["Emp_ID"].astype(str) + " - " + df["Name"] if not df.empty else []
-
-if role in ("Admin", "Manager"):
-    emp_sel = st.selectbox("Select Employee", emp_opts)
-    emp_mood_id = int(emp_sel.split(" - ")[0]) if emp_sel else None
-else:
-    emp_mood_id = st.session_state.get("my_emp_id", None)
-    if emp_mood_id is None:
-        emp_sel = st.selectbox("Select your Emp_ID", emp_opts)
-        emp_mood_id = int(emp_sel.split(" - ")[0]) if emp_sel else None
-        if emp_mood_id is not None:
-            st.session_state["my_emp_id"] = emp_mood_id
-
-mood_choice = st.radio("Mood today", ["😊 Happy","😐 Neutral","😔 Sad","😡 Angry"], horizontal=True)
-if st.button("Log Mood"):
-    if not emp_mood_id:
-        st.warning("Select an employee before logging mood.")
-    else:
-        try:
-            db.add_mood_entry(emp_mood_id, mood_choice, remarks="")
-            st.success("Mood logged successfully.")
-            st.session_state["refresh_trigger"] = not st.session_state.get("refresh_trigger", False)
-        except Exception as e:
-            st.error("Failed to log mood.")
-            st.exception(e)
-
-# Mood History & Analytics
-try:
-    mood_df = db.fetch_mood_logs()
-except Exception:
-    mood_df = pd.DataFrame()
-
-if not mood_df.empty and not df.empty:
-    mood_merged = pd.merge(mood_df, df[["Emp_ID","Name"]], left_on="emp_id", right_on="Emp_ID", how="left")
-    mood_display = mood_merged[["emp_id","Name","mood","log_date"]].sort_values(by="log_date", ascending=False)
-    st.subheader("Mood History")
-    st.dataframe(mood_display, height=300)
-
-    mood_label_map = {"😊 Happy":"Happy","😐 Neutral":"Neutral","😔 Sad":"Sad","😡 Angry":"Angry"}
-    mood_score_map = {"Happy":5,"Neutral":3,"Sad":2,"Angry":1}
-    mood_merged["Mood_Label"] = mood_merged["mood"].replace(mood_label_map)
-    mood_merged["Mood_Score"] = mood_merged["Mood_Label"].map(mood_score_map).fillna(0).astype(int)
-    avg_mood = mood_merged.groupby("Name")["Mood_Score"].mean().round().astype(int).sort_values(ascending=True)
-
-    if not avg_mood.empty:
-        st.subheader("Average Mood per Employee")
-        fig, ax = plt.subplots(figsize=(6,3))
-        ax.barh(avg_mood.index, avg_mood.values)
-        ax.set_xlabel("Avg Mood Score")
-        st.pyplot(fig)
-else:
-    st.info("No mood logs to show.")
-
-# -------------------------
 # PDF Export
 # -------------------------
-st.header("📄 Export")
-if st.button("Download Summary PDF"):
-    pdf_path = "workforce_summary_report.pdf"
+st.sidebar.header("📄 Export PDF Summary")
+if st.sidebar.button("Download Summary PDF"):
     try:
-        generate_summary_pdf(
-            pdf_path,
-            summary["total"],
-            summary["active"],
-            summary["resigned"],
-            mood_df=mood_df,
-            gender_fig=gender_fig,
-            salary_fig=salary_fig,
-            dept_fig=dept_fig
-        )
+        pdf_path = "workforce_summary_report.pdf"
+        generate_summary_pdf(pdf_path, summary["total"], summary["active"], summary["resigned"], filtered_df)
         with open(pdf_path, "rb") as f:
-            pdf_bytes = f.read()
-        b64 = base64.b64encode(pdf_bytes).decode()
-        href = f'<a href="data:application/pdf;base64,{b64}" download="workforce_summary_report.pdf">📥 Download PDF</a>'
-        st.markdown(href, unsafe_allow_html=True)
-        st.success("PDF generated successfully!")
+            st.sidebar.download_button("📥 Download PDF", f, file_name="workforce_summary_report.pdf", mime="application/pdf")
     except Exception as e:
         st.error("Failed to generate PDF.")
         st.exception(e)

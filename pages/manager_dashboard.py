@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 
-from auth import require_login
+from utils.auth import require_login
+
 from utils import database as db
 from utils.analytics import get_summary, department_distribution, gender_ratio, average_salary_by_dept
 

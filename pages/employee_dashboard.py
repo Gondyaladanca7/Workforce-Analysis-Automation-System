@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
 
-from auth import require_login
+from utils.auth import require_login
+
 from utils import database as db
 
 require_login()

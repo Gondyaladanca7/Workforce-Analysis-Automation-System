@@ -1,13 +1,13 @@
-# auth.py
+# utils/auth.py
 import streamlit as st
 from utils import database as db
-import hashlib
+from hashlib import sha256
 
 # -------------------------
 # Password hashing
 # -------------------------
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return sha256(password.encode()).hexdigest()
 
 # -------------------------
 # Login
@@ -33,7 +33,8 @@ def logout_user():
         for key in ["user", "role"]:
             if key in st.session_state:
                 del st.session_state[key]
-        st.experimental_rerun()
+        st.rerun()
+
 
 # -------------------------
 # Require login decorator
@@ -46,7 +47,7 @@ def require_login():
         if st.button("Login"):
             if login_user(username, password):
                 st.success(f"Welcome, {username}!")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid username or password.")
         st.stop()
@@ -58,4 +59,3 @@ def show_role_badge():
     role = st.session_state.get("role", "")
     if role:
         st.sidebar.markdown(f"**Role:** {role}")
-    

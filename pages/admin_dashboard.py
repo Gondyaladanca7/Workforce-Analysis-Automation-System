@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import datetime
 import base64
 
-from auth import require_login
+from utils.auth import require_login
+
 from utils import database as db
 from utils.analytics import get_summary, department_distribution, gender_ratio, average_salary_by_dept
 from utils.pdf_export import generate_summary_pdf

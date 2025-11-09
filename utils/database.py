@@ -5,7 +5,6 @@ import pandas as pd
 from typing import Optional
 from datetime import date
 import os
-from utils.auth import hash_password  # imported once at top
 
 DB_PATH = "data/workforce.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)  # ensure data folder exists
@@ -117,6 +116,8 @@ def fetch_employees() -> pd.DataFrame:
 def delete_employee(emp_id: int):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute("DELETE FROM mood_logs WHERE emp_id=?", (emp_id,))
+    cursor.execute("DELETE FROM tasks WHERE emp_id=?", (emp_id,))
     cursor.execute("DELETE FROM employees WHERE Emp_ID=?", (emp_id,))
     conn.commit()
     conn.close()
@@ -187,19 +188,34 @@ def add_user(username: str, password: str, role: str):
 # Initialize all tables & default users
 # -----------------------------
 def initialize_all_tables():
+    """
+    Creates all tables, then resets default users with hashed passwords.
+    Import hash_password here (local import) to avoid circular import at module import time.
+    """
     initialize_database()
     initialize_mood_table()
     initialize_task_table()
     initialize_user_table()
 
-    # Clear existing users to avoid plain-text conflicts
+    # Clear existing users and insert default users (hashed)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM users")
-    conn.commit()
+    try:
+        cursor.execute("DELETE FROM users")
+        conn.commit()
+    except Exception:
+        # If users table doesn't exist or deletion fails, ignore and continue
+        pass
+    conn.close()
 
-    # Default users
+    # local import to avoid circular import at module load
+    try:
+        from utils.auth import hash_password
+    except Exception:
+        # fallback to a safe local hash if import fails (shouldn't happen if utils/auth.py exists)
+        import hashlib
+        def hash_password(p): return hashlib.sha256(p.encode()).hexdigest()
+
     add_user("admin", hash_password("admin123"), "Admin")
     add_user("manager", hash_password("manager123"), "Manager")
     add_user("employee", hash_password("employee123"), "Employee")
-    conn.close()
