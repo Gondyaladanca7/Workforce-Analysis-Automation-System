@@ -144,14 +144,20 @@ def fetch_mood_logs() -> pd.DataFrame:
 # -----------------------------
 # Task Functions
 # -----------------------------
-def add_task(task_name: str, emp_id: int, assigned_by: str,
-             due_date: str, remarks: str = "", status: str = "Pending"):
+def add_task(task: dict):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO tasks (task_name, emp_id, assigned_by, due_date, status, remarks)
         VALUES (?, ?, ?, ?, ?, ?)
-    """, (task_name, emp_id, assigned_by, due_date, status, remarks))
+    """, (
+        task.get("task_name", "Untitled Task"),
+        task.get("emp_id"),
+        task.get("assigned_by", ""),
+        task.get("due_date", ""),
+        task.get("status", "Pending"),
+        task.get("remarks", "")
+    ))
     conn.commit()
     conn.close()
 
@@ -188,34 +194,29 @@ def add_user(username: str, password: str, role: str):
 # Initialize all tables & default users
 # -----------------------------
 def initialize_all_tables():
-    """
-    Creates all tables, then resets default users with hashed passwords.
-    Import hash_password here (local import) to avoid circular import at module import time.
-    """
     initialize_database()
     initialize_mood_table()
     initialize_task_table()
     initialize_user_table()
 
-    # Clear existing users and insert default users (hashed)
+    # Clear existing users
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM users")
         conn.commit()
     except Exception:
-        # If users table doesn't exist or deletion fails, ignore and continue
         pass
     conn.close()
 
-    # local import to avoid circular import at module load
+    # Import hash function
     try:
         from utils.auth import hash_password
     except Exception:
-        # fallback to a safe local hash if import fails (shouldn't happen if utils/auth.py exists)
         import hashlib
         def hash_password(p): return hashlib.sha256(p.encode()).hexdigest()
 
+    # Add default users
     add_user("admin", hash_password("admin123"), "Admin")
     add_user("manager", hash_password("manager123"), "Manager")
     add_user("employee", hash_password("employee123"), "Employee")

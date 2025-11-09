@@ -1,9 +1,7 @@
-# utils/analytics.py
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # -------------------------
-# Summary
+# Workforce Summary
 # -------------------------
 def get_summary(df: pd.DataFrame):
     total = len(df)
@@ -15,38 +13,22 @@ def get_summary(df: pd.DataFrame):
 # Department Distribution
 # -------------------------
 def department_distribution(df: pd.DataFrame) -> pd.Series:
-    """
-    Returns department-wise counts as a Series.
-    """
     if "Department" not in df.columns or df.empty:
         return pd.Series(dtype=int)
-    
-    dept_counts = df["Department"].value_counts().sort_index()
-    return dept_counts
+    return df["Department"].value_counts().sort_index()
 
 # -------------------------
 # Gender Ratio
 # -------------------------
 def gender_ratio(df: pd.DataFrame) -> pd.Series:
-    """
-    Returns male/female counts as a Series.
-    """
     if "Gender" not in df.columns or df.empty:
         return pd.Series(dtype=int)
-    
-    gender_counts = df["Gender"].value_counts().reindex(["Male", "Female"], fill_value=0)
-    return gender_counts
+    return df["Gender"].value_counts().reindex(["Male","Female"], fill_value=0)
 
 # -------------------------
 # Average Salary by Department
 # -------------------------
 def average_salary_by_dept(df: pd.DataFrame) -> pd.Series:
-    """
-    Returns a Series: index=Department, values=average Salary.
-    Always a single Series for plotting in Seaborn.
-    """
     if "Department" not in df.columns or "Salary" not in df.columns or df.empty:
         return pd.Series(dtype=float)
-    
-    avg_salary = df.groupby("Department")["Salary"].mean().sort_values(ascending=False)
-    return avg_salary
+    return df.groupby("Department")["Salary"].mean().sort_values(ascending=False)
