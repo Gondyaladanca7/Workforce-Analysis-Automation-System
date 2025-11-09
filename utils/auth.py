@@ -1,70 +1,61 @@
-"""
-Authentication and Role-based Access Control
-"""
-
+# auth.py
 import streamlit as st
-import bcrypt
+from utils import database as db
+import hashlib
 
 # -------------------------
-# Predefined users
-# Passwords stored in plaintext for simplicity (replace with hashed in production)
-USERS = {
-    "admin": {"password": "admin123", "role": "Admin"},
-    "manager": {"password": "manager123", "role": "Manager"},
-    "employee": {"password": "employee123", "role": "Employee"},
-}
+# Password hashing
+# -------------------------
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
 
 # -------------------------
-# Password hashing functions
-def hash_password(password: str) -> bytes:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
-
-def check_password(password: str, hashed: bytes) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), hashed)
-
+# Login
 # -------------------------
-# Login / Logout
-def login_user():
-    st.title("🔐 Login — Workforce Analysis Automation System")
-
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        if username in USERS and password == USERS[username]["password"]:
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username
-            st.session_state["role"] = USERS[username]["role"]
-            st.success(f"Welcome, {username.title()} ({st.session_state['role']}) 🎉")
-            # Trigger a rerun via session state toggle
-            st.session_state["login_trigger"] = not st.session_state.get("login_trigger", False)
+def login_user(username: str, password: str) -> bool:
+    try:
+        user = db.get_user_by_username(username)
+        if user and user["password"] == hash_password(password):
+            st.session_state["user"] = username
+            st.session_state["role"] = user["role"]
+            return True
         else:
-            st.error("Invalid credentials. Please try again.")
+            return False
+    except Exception as e:
+        st.error(f"Login failed due to error: {e}")
+        return False
 
+# -------------------------
+# Logout
+# -------------------------
 def logout_user():
     if st.sidebar.button("Logout"):
-        st.session_state["logged_in"] = False
-        st.session_state["username"] = None
-        st.session_state["role"] = None
-        # Trigger a rerun
-        st.session_state["login_trigger"] = not st.session_state.get("login_trigger", False)
+        for key in ["user", "role"]:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.experimental_rerun()
 
 # -------------------------
 # Require login decorator
-def require_login(func):
-    """
-    Decorator to protect pages: user must be logged in
-    """
-    def wrapper(*args, **kwargs):
-        if not st.session_state.get("logged_in", False):
-            login_user()
-            st.stop()
-        return func(*args, **kwargs)
-    return wrapper
+# -------------------------
+def require_login():
+    if "user" not in st.session_state:
+        st.warning("Please login to continue.")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login"):
+            if login_user(username, password):
+                st.success(f"Welcome, {username}!")
+                st.experimental_rerun()
+            else:
+                st.error("Invalid username or password.")
+        st.stop()
 
 # -------------------------
-# Sidebar Role Badge
+# Show role badge
+# -------------------------
 def show_role_badge():
-    """Show logged-in user and role in sidebar"""
-    if st.session_state.get("username") and st.session_state.get("role"):
-        st.sidebar.info(f"👤 Logged in as: **{st.session_state['username'].title()} ({st.session_state['role']})**")
+    role = st.session_state.get("role", "")
+    if role:
+        st.sidebar.markdown(f"**Role:** {role}")
+    
