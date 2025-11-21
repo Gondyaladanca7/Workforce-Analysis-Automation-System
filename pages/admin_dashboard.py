@@ -1,38 +1,41 @@
+# pages/admin_dashboard.py
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import datetime
-import base64
 
 from utils.auth import require_login
-
 from utils import database as db
-from utils.analytics import get_summary, department_distribution, gender_ratio, average_salary_by_dept
+from utils.analytics import get_summary, department_distribution_chart, gender_ratio_chart, average_salary_by_dept_chart
 from utils.pdf_export import generate_summary_pdf
 
+# -------------------------
+# Login Check
+# -------------------------
 require_login()
 if st.session_state.get("role") != "Admin":
     st.warning("Access denied. Admins only.")
     st.stop()
 
 username = st.session_state.get("user", "Admin")
-
+st.set_page_config(page_title="Admin Dashboard", page_icon="🛠️", layout="wide")
 st.title("🛠️ Admin Dashboard")
 
-# Load employee data
+# -------------------------
+# Load Employee Data
+# -------------------------
 try:
     df = db.fetch_employees()
-except:
+except Exception:
     df = pd.DataFrame(columns=["Emp_ID","Name","Age","Gender","Department","Role","Skills",
                                "Join_Date","Resign_Date","Status","Salary","Location"])
 
 # -------------------------
-# Employee Management
+# Employee Records
 # -------------------------
 st.header("1️⃣ Employee Records")
-
 search_term = st.text_input("Search employees by Name, ID, Role or Skills").strip()
 display_df = df.copy()
+
 if search_term:
     cond = pd.Series(False, index=display_df.index)
     for col in ["Name","Emp_ID","Role","Skills"]:
@@ -43,7 +46,19 @@ if search_term:
 cols_to_show = ["Emp_ID","Name","Department","Role","Join_Date","Status"]
 st.dataframe(display_df[cols_to_show], height=400)
 
+# -------------------------
+# Employee Summary Metrics
+# -------------------------
+st.header("📊 Workforce Summary Metrics")
+summary = get_summary(display_df)
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Employees", summary["total"])
+col2.metric("Active Employees", summary["active"])
+col3.metric("Resigned Employees", summary["resigned"])
+
+# -------------------------
 # Add Employee Form
+# -------------------------
 st.subheader("➕ Add New Employee")
 with st.form("add_employee_form", clear_on_submit=True):
     emp_name = st.text_input("Name")
@@ -83,7 +98,9 @@ with st.form("add_employee_form", clear_on_submit=True):
             st.error("Failed to add employee.")
             st.exception(e)
 
+# -------------------------
 # Delete Employee
+# -------------------------
 st.subheader("🗑️ Delete Employee")
 delete_id = st.number_input("Enter Employee ID", step=1, key="del_emp")
 if st.button("Delete Employee"):
@@ -98,8 +115,6 @@ if st.button("Delete Employee"):
 # Task Management
 # -------------------------
 st.header("2️⃣ Task Management")
-
-# Assign Task
 st.subheader("Assign Task")
 with st.form("assign_task_form"):
     task_name = st.text_input("Task title")
@@ -111,26 +126,38 @@ with st.form("assign_task_form"):
     submit_task = st.form_submit_button("Assign Task")
 
     if submit_task:
-        try:
-            db.add_task(task_name, emp_id_for_task, username, due_date.strftime("%Y-%m-%d"), remarks or "")
-            st.success("Task assigned successfully!")
-        except Exception as e:
-            st.error("Failed to assign task.")
-            st.exception(e)
+        if not task_name or emp_id_for_task is None:
+            st.warning("Task title and assignee are required.")
+        else:
+            try:
+                db.add_task({
+                    "task_name": task_name,
+                    "emp_id": emp_id_for_task,
+                    "assigned_by": username,
+                    "due_date": due_date.strftime("%Y-%m-%d"),
+                    "status": "Pending",
+                    "remarks": remarks or ""
+                })
+                st.success("Task assigned successfully!")
+            except Exception as e:
+                st.error("Failed to assign task.")
+                st.exception(e)
 
 # View Tasks
 st.subheader("All Tasks")
 try:
     tasks_df = db.fetch_tasks()
-except:
+except Exception:
     tasks_df = pd.DataFrame()
+
 if not tasks_df.empty:
     tasks_df["due_date_parsed"] = pd.to_datetime(tasks_df["due_date"], errors="coerce").dt.date
     today = pd.Timestamp.today().date()
     tasks_df["overdue"] = tasks_df["due_date_parsed"].apply(lambda d: d<today if pd.notna(d) else False)
     emp_map = df.set_index("Emp_ID")["Name"].to_dict()
     tasks_df["Employee"] = tasks_df["emp_id"].map(emp_map).fillna(tasks_df["emp_id"].astype(str))
-    st.dataframe(tasks_df[["task_id","task_name","Employee","assigned_by","due_date","status","overdue"]], height=300)
+    display_cols = ["task_id","task_name","Employee","assigned_by","due_date","status","overdue"]
+    st.dataframe(tasks_df[display_cols], height=300)
 else:
     st.info("No tasks found.")
 
@@ -157,15 +184,24 @@ if st.button("Log Mood"):
 st.header("4️⃣ Export PDF Report")
 if st.button("Download Summary PDF"):
     try:
-        summary = get_summary(df)
-        gender_ser = gender_ratio(df)
-        salary_ser = average_salary_by_dept(df)
-        dept_ser = department_distribution(df)
-        generate_summary_pdf("workforce_summary_report.pdf", summary["total"], summary["active"], summary["resigned"],
-                            df, gender_ser, salary_ser, dept_ser)
-        st.success("PDF generated!")
+        # Generate charts identical to dashboard
+        dept_fig = department_distribution_chart(display_df)
+        gender_fig = gender_ratio_chart(display_df)
+        salary_fig = average_salary_by_dept_chart(display_df)
+
+        # summary counts based on current display_df (filtered)
+        summary = get_summary(display_df)
+
+        # Generate PDF
+        generate_summary_pdf("workforce_summary_report.pdf",
+                             summary["total"], summary["active"], summary["resigned"],
+                             display_df, mood_df=None,
+                             dept_fig=dept_fig, gender_fig=gender_fig, salary_fig=salary_fig)
+
+        # Download button
         with open("workforce_summary_report.pdf","rb") as f:
             st.download_button("📥 Download PDF", f, file_name="workforce_summary_report.pdf", mime="application/pdf")
+        st.success("PDF generated successfully!")
     except Exception as e:
         st.error("Failed to generate PDF.")
         st.exception(e)
