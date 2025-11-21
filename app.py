@@ -1,13 +1,4 @@
-"""
-Workforce Analytics & Employee Management System
-Single-entry app that routes by role (uses utils/auth.py)
-Features:
- - Role-based login
- - Employee management (add/delete)
- - Mood tracker + analytics
- - Task management
- - PDF export (professional)
-"""
+
 
 import streamlit as st
 import pandas as pd
