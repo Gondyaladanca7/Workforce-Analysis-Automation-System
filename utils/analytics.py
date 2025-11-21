@@ -1,34 +1,123 @@
+# utils/analytics.py
 import pandas as pd
 
 # -------------------------
-# Workforce Summary
+# Employee Summary Functions
 # -------------------------
-def get_summary(df: pd.DataFrame):
+def get_summary(df):
+    """
+    Returns total, active, and resigned employee counts.
+    """
+    if df.empty:
+        return {"total": 0, "active": 0, "resigned": 0}
+    
     total = len(df)
     active = len(df[df["Status"]=="Active"]) if "Status" in df.columns else 0
     resigned = len(df[df["Status"]=="Resigned"]) if "Status" in df.columns else 0
     return {"total": total, "active": active, "resigned": resigned}
 
-# -------------------------
-# Department Distribution
-# -------------------------
-def department_distribution(df: pd.DataFrame) -> pd.Series:
-    if "Department" not in df.columns or df.empty:
+def department_distribution(df):
+    """
+    Returns a Series with counts of employees per department.
+    """
+    if df.empty or "Department" not in df.columns:
         return pd.Series(dtype=int)
-    return df["Department"].value_counts().sort_index()
+    return df["Department"].value_counts()
 
-# -------------------------
-# Gender Ratio
-# -------------------------
-def gender_ratio(df: pd.DataFrame) -> pd.Series:
-    if "Gender" not in df.columns or df.empty:
+def gender_ratio(df):
+    """
+    Returns a Series with counts of employees per gender.
+    """
+    if df.empty or "Gender" not in df.columns:
         return pd.Series(dtype=int)
-    return df["Gender"].value_counts().reindex(["Male","Female"], fill_value=0)
+    return df["Gender"].value_counts()
 
-# -------------------------
-# Average Salary by Department
-# -------------------------
-def average_salary_by_dept(df: pd.DataFrame) -> pd.Series:
-    if "Department" not in df.columns or "Salary" not in df.columns or df.empty:
+def average_salary_by_dept(df):
+    """
+    Returns average salary per department.
+    """
+    if df.empty or "Department" not in df.columns or "Salary" not in df.columns:
         return pd.Series(dtype=float)
-    return df.groupby("Department")["Salary"].mean().sort_values(ascending=False)
+    return df.groupby("Department")["Salary"].mean()
+
+# -------------------------
+# Feedback Analytics
+# -------------------------
+def feedback_summary(feedback_df, employee_df):
+    """
+    Returns a summary table of average rating and feedback count per employee.
+
+    Args:
+        feedback_df (DataFrame): Feedback log with columns ['receiver_id', 'rating', ...]
+        employee_df (DataFrame): Employee data with 'Emp_ID' and 'Name'
+
+    Returns:
+        DataFrame: Columns ['Employee', 'Avg_Rating', 'Feedback_Count']
+    """
+    if feedback_df.empty or employee_df.empty:
+        return pd.DataFrame(columns=["Employee", "Avg_Rating", "Feedback_Count"])
+
+    summary = feedback_df.groupby("receiver_id").agg(
+        Avg_Rating=("rating", "mean"),
+        Feedback_Count=("rating", "count")
+    ).reset_index()
+
+    emp_map = employee_df.set_index("Emp_ID")["Name"].to_dict()
+    summary["Employee"] = summary["receiver_id"].map(emp_map)
+    summary = summary[["Employee", "Avg_Rating", "Feedback_Count"]]
+    return summary
+
+# -------------------------
+# Skill & Role Analytics
+# -------------------------
+def skill_inventory(df):
+    """
+    Returns a Series of skill counts across all employees.
+    """
+    if df.empty or "Skills" not in df.columns:
+        return pd.Series(dtype=int)
+    skill_list = []
+    for s in df["Skills"].dropna():
+        skill_list.extend([skill.strip() for skill in s.split(";") if skill.strip()])
+    return pd.Series(skill_list).value_counts()
+
+def role_distribution(df):
+    """
+    Returns a Series of employee counts per role.
+    """
+    if df.empty or "Role" not in df.columns:
+        return pd.Series(dtype=int)
+    return df["Role"].value_counts()
+
+# -------------------------
+# Employee & Task Analytics
+# -------------------------
+def tasks_summary(tasks_df):
+    """
+    Returns a Series of task counts per status.
+    """
+    if tasks_df.empty or "status" not in tasks_df.columns:
+        return pd.Series(dtype=int)
+    return tasks_df["status"].value_counts()
+
+def overdue_tasks(tasks_df):
+    """
+    Returns a DataFrame of tasks that are overdue.
+    """
+    if tasks_df.empty or "due_date" not in tasks_df.columns:
+        return pd.DataFrame()
+    tasks_df["due_date_parsed"] = pd.to_datetime(tasks_df["due_date"], errors="coerce").dt.date
+    today = pd.Timestamp.today().date()
+    tasks_df["overdue"] = tasks_df["due_date_parsed"].apply(lambda d: d<today if pd.notna(d) else False)
+    return tasks_df[tasks_df["overdue"]]
+
+# -------------------------
+# Utility for employee selection
+# -------------------------
+def employee_options(df):
+    """
+    Returns a list of "Emp_ID - Name" strings for selection.
+    """
+    if df.empty:
+        return []
+    return df["Emp_ID"].astype(str) + " - " + df["Name"]

@@ -1,86 +1,97 @@
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-from reportlab.lib.units import inch
-import io
+# utils/pdf_export.py
+from fpdf import FPDF
+import pandas as pd
+from utils.analytics import feedback_summary
 
-def generate_summary_pdf(path, total, active, resigned, df, mood_df=None, gender_fig=None, salary_fig=None, dept_fig=None):
-    doc = SimpleDocTemplate(path, pagesize=A4)
-    elements = []
-    styles = getSampleStyleSheet()
+class PDF(FPDF):
+    def header(self):
+        self.set_font("Arial", "B", 14)
+        self.cell(0, 10, "Workforce Summary Report", ln=True, align="C")
+        self.ln(5)
 
-    # Title
-    title_style = ParagraphStyle(
-        name="Title",
-        fontSize=18,
-        leading=22,
-        alignment=1,
-        spaceAfter=20
-    )
-    elements.append(Paragraph("Workforce Summary Report", title_style))
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("Arial", "I", 8)
+        self.cell(0, 10, f"Page {self.page_no()}", align="C")
 
-    # Summary metrics
-    metrics_style = ParagraphStyle(name="Metrics", fontSize=12, leading=16, spaceAfter=10)
-    elements.append(Paragraph(f"Total Employees: {total}", metrics_style))
-    elements.append(Paragraph(f"Active Employees: {active}", metrics_style))
-    elements.append(Paragraph(f"Resigned Employees: {resigned}", metrics_style))
-    elements.append(Spacer(1, 12))
+def generate_summary_pdf(file_path, total_employees, active_employees, resigned_employees,
+                         employee_df, gender_series=None, salary_series=None,
+                         dept_series=None, feedback_df=None):
+    """
+    Generates a PDF report of workforce analytics including feedback.
 
-    # Employee Table
-    if not df.empty:
-        df_display = df.copy()
-        cols_to_show = ["Emp_ID", "Name", "Department", "Role", "Join_Date", "Status"]
-        df_display = df_display[cols_to_show]
+    Args:
+        file_path (str): Path to save the PDF.
+        total_employees (int)
+        active_employees (int)
+        resigned_employees (int)
+        employee_df (DataFrame): Employee details
+        gender_series (Series): Optional gender counts
+        salary_series (Series): Optional avg salary per department
+        dept_series (Series): Optional employee count per department
+        feedback_df (DataFrame): Optional feedback log
+    """
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # -------------------------
+    # Key Metrics
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "1️⃣ Key Metrics", ln=True)
+    pdf.set_font("Arial", "", 11)
+    pdf.cell(0, 8, f"Total Employees: {total_employees}", ln=True)
+    pdf.cell(0, 8, f"Active Employees: {active_employees}", ln=True)
+    pdf.cell(0, 8, f"Resigned Employees: {resigned_employees}", ln=True)
+    pdf.ln(5)
 
-        data = [cols_to_show] + df_display.values.tolist()
+    # -------------------------
+    # Department Distribution
+    if dept_series is not None and not dept_series.empty:
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, "2️⃣ Department Distribution", ln=True)
+        pdf.set_font("Arial", "", 11)
+        for dept, count in dept_series.items():
+            pdf.cell(0, 8, f"{dept}: {count} employees", ln=True)
+        pdf.ln(5)
 
-        # Pastel colors
-        pastel_blue = colors.Color(173/255, 216/255, 230/255)
-        pastel_green = colors.Color(198/255, 239/255, 206/255)
-        pastel_grey = colors.Color(240/255, 240/255, 240/255)
+    # -------------------------
+    # Gender Ratio
+    if gender_series is not None and not gender_series.empty:
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, "3️⃣ Gender Distribution", ln=True)
+        pdf.set_font("Arial", "", 11)
+        for gender, count in gender_series.items():
+            pdf.cell(0, 8, f"{gender}: {count}", ln=True)
+        pdf.ln(5)
 
-        t = Table(data, hAlign='LEFT', repeatRows=1)
-        t.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), pastel_blue),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.black),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,-1), 10),
-            ('BOTTOMPADDING', (0,0), (-1,0), 8),
-            ('BACKGROUND', (0,1), (-1,-1), pastel_grey),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ]))
-        elements.append(t)
-        elements.append(Spacer(1, 12))
+    # -------------------------
+    # Average Salary
+    if salary_series is not None and not salary_series.empty:
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, "4️⃣ Average Salary by Department", ln=True)
+        pdf.set_font("Arial", "", 11)
+        for dept, salary in salary_series.items():
+            pdf.cell(0, 8, f"{dept}: ₹{salary:.2f}", ln=True)
+        pdf.ln(5)
 
-    # Mood logs table
-    if mood_df is not None and not mood_df.empty:
-        elements.append(Paragraph("Mood Logs", styles['Heading2']))
-        mood_cols = ["Name", "log_date", "mood", "remarks"]  # matches DB column names
-        mood_data = [mood_cols] + mood_df[mood_cols].values.tolist()
-        t_mood = Table(mood_data, hAlign='LEFT', repeatRows=1)
-        t_mood.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), pastel_green),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.black),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,-1), 10),
-            ('BOTTOMPADDING', (0,0), (-1,0), 8),
-            ('BACKGROUND', (0,1), (-1,-1), colors.whitesmoke),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ]))
-        elements.append(t_mood)
-        elements.append(Spacer(1, 12))
+    # -------------------------
+    # Feedback Summary
+    if feedback_df is not None and not feedback_df.empty:
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, "5️⃣ Employee Feedback Summary", ln=True)
+        pdf.set_font("Arial", "", 11)
+        fb_summary = feedback_summary(feedback_df, employee_df)
+        if fb_summary.empty:
+            pdf.cell(0, 8, "No feedback available.", ln=True)
+        else:
+            for _, row in fb_summary.iterrows():
+                pdf.cell(0, 8, f"{row['Employee']}: Avg Rating {row['Avg_Rating']:.2f} ({row['Feedback_Count']} feedbacks)", ln=True)
+        pdf.ln(5)
 
-    # Figures
-    for fig, title in zip([dept_fig, gender_fig, salary_fig], ["Department Distribution", "Gender Ratio", "Average Salary by Department"]):
-        if fig:
-            buf = io.BytesIO()
-            fig.savefig(buf, format='png', bbox_inches='tight')
-            buf.seek(0)
-            elements.append(Paragraph(title, styles['Heading2']))
-            elements.append(Image(buf, width=6*inch, height=3*inch))
-            elements.append(Spacer(1, 12))
+    # -------------------------
+    # Optional: Add more future analytics
+    pdf.set_font("Arial", "I", 10)
+    pdf.cell(0, 8, "Report generated automatically by Workforce Analytics System.", ln=True)
 
-    doc.build(elements)
+    pdf.output(file_path)
