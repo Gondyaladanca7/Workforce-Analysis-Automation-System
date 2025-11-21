@@ -1,61 +1,62 @@
-# utils/auth.py
 import streamlit as st
-from utils import database as db
-from hashlib import sha256
-
-# -------------------------
-# Password hashing
-# -------------------------
-def hash_password(password: str) -> str:
-    return sha256(password.encode()).hexdigest()
+from utils.database import get_user_by_username, hash_password
 
 # -------------------------
 # Login
 # -------------------------
-def login_user(username: str, password: str) -> bool:
-    try:
-        user = db.get_user_by_username(username)
-        if user and user["password"] == hash_password(password):
-            st.session_state["user"] = username
-            st.session_state["role"] = user["role"]
-            return True
-        else:
-            return False
-    except Exception as e:
-        st.error(f"Login failed due to error: {e}")
-        return False
+def login(username, password):
+    user = get_user_by_username(username)
+    if not user:
+        return False, "User not found"
+
+    if hash_password(password) == user["password"]:
+        st.session_state["logged_in"] = True
+        st.session_state["user"] = user["username"]
+        st.session_state["role"] = user["role"]
+        st.session_state["user_id"] = user["id"]
+        # Trigger refresh after login
+        st.session_state["login_trigger"] = not st.session_state.get("login_trigger", False)
+        return True, "Login successful"
+    return False, "Invalid password"
+
+# -------------------------
+# Require login
+# -------------------------
+def require_login():
+    if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+        st.warning("⚠️ Please login to access this page.")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login"):
+            success, msg = login(username, password)
+            if success:
+                st.success(msg)
+                # Stop script to refresh with new session state
+                st.stop()
+            else:
+                st.error(msg)
+        st.stop()
 
 # -------------------------
 # Logout
 # -------------------------
 def logout_user():
     if st.sidebar.button("Logout"):
-        for key in ["user", "role"]:
+        for key in ["logged_in","user","role","user_id","my_emp_id","login_trigger"]:
             if key in st.session_state:
                 del st.session_state[key]
-        st.rerun()
-
+        st.experimental_rerun_safe()
 
 # -------------------------
-# Require login decorator
+# Safe rerun replacement
 # -------------------------
-def require_login():
-    if "user" not in st.session_state:
-        st.warning("Please login to continue.")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.button("Login"):
-            if login_user(username, password):
-                st.success(f"Welcome, {username}!")
-                st.rerun()
-            else:
-                st.error("Invalid username or password.")
-        st.stop()
+def st_experimental_rerun_safe():
+    # Streamlit newer versions: just stop, reload occurs naturally
+    st.stop()
 
 # -------------------------
 # Show role badge
 # -------------------------
 def show_role_badge():
-    role = st.session_state.get("role", "")
-    if role:
-        st.sidebar.markdown(f"**Role:** {role}")
+    role = st.session_state.get("role", "Employee")
+    st.sidebar.markdown(f"**Role:** {role}")

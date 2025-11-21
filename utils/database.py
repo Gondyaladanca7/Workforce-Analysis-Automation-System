@@ -1,21 +1,42 @@
-# utils/database.py
 import sqlite3
 import pandas as pd
 import datetime
+import hashlib
+import os
 
 DB_PATH = "data/workforce.db"
 
 # -------------------------
-# Generic helpers
+# Helpers
+# -------------------------
 def connect_db():
+    if not os.path.exists("data"):
+        os.makedirs("data")
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     return conn
 
-def create_tables():
+def hash_password(password):
+    """Return SHA256 hash of password"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# -------------------------
+# Initialize all tables
+# -------------------------
+def initialize_all_tables():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Employees
+    # Users table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        role TEXT
+    )
+    """)
+
+    # Employees table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS employees (
         Emp_ID INTEGER PRIMARY KEY,
@@ -33,7 +54,7 @@ def create_tables():
     )
     """)
 
-    # Tasks
+    # Tasks table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks (
         task_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +68,7 @@ def create_tables():
     )
     """)
 
-    # Mood logs
+    # Mood logs table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS mood_logs (
         mood_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +79,7 @@ def create_tables():
     )
     """)
 
-    # Feedback
+    # Feedback table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS feedback (
         feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,10 +92,50 @@ def create_tables():
     """)
 
     conn.commit()
+
+    # -------------------------
+    # Add default admin
+    # -------------------------
+    cursor.execute("SELECT * FROM users WHERE username='admin'")
+    if not cursor.fetchone():
+        cursor.execute(
+            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            ("admin", hash_password("admin123"), "Admin")
+        )
+        conn.commit()
+        print("✅ Default admin user created: username='admin', password='admin123'")
+    else:
+        print("ℹ️ Admin user already exists")
+
+    conn.close()
+    print("✅ All tables initialized successfully!")
+
+# -------------------------
+# Users functions
+# -------------------------
+def get_user_by_username(username):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, password, role FROM users WHERE username=?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {"id": row[0], "username": row[1], "password": row[2], "role": row[3]}
+    return None
+
+def add_user(username, password, role="Employee"):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+        (username, hash_password(password), role)
+    )
+    conn.commit()
     conn.close()
 
 # -------------------------
-# Employee functions
+# Employees
+# -------------------------
 def fetch_employees():
     conn = connect_db()
     df = pd.read_sql("SELECT * FROM employees", conn)
@@ -86,7 +147,7 @@ def add_employee(emp_dict):
     cursor = conn.cursor()
     columns = ", ".join(emp_dict.keys())
     placeholders = ", ".join("?" for _ in emp_dict)
-    sql = f"INSERT INTO employees ({columns}) VALUES ({placeholders})"
+    sql = f"INSERT OR REPLACE INTO employees ({columns}) VALUES ({placeholders})"
     cursor.execute(sql, tuple(emp_dict.values()))
     conn.commit()
     conn.close()
@@ -99,26 +160,36 @@ def delete_employee(emp_id):
     conn.close()
 
 # -------------------------
-# Tasks functions
+# Tasks
+# -------------------------
 def fetch_tasks():
     conn = connect_db()
     df = pd.read_sql("SELECT * FROM tasks", conn)
     conn.close()
     return df
 
-def add_task(task_name, emp_id, assigned_by, due_date, remarks=""):
+def add_task(task_dict):
     conn = connect_db()
     cursor = conn.cursor()
     created_date = datetime.date.today().strftime("%Y-%m-%d")
     cursor.execute("""
-        INSERT INTO tasks (task_name, emp_id, assigned_by, due_date, remarks, created_date)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (task_name, emp_id, assigned_by, due_date, remarks, created_date))
+        INSERT INTO tasks (task_name, emp_id, assigned_by, due_date, status, remarks, created_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (
+        task_dict["task_name"],
+        task_dict["emp_id"],
+        task_dict.get("assigned_by",""),
+        task_dict.get("due_date",""),
+        task_dict.get("status","Pending"),
+        task_dict.get("remarks",""),
+        created_date
+    ))
     conn.commit()
     conn.close()
 
 # -------------------------
-# Mood functions
+# Mood logs
+# -------------------------
 def fetch_mood_logs():
     conn = connect_db()
     df = pd.read_sql("SELECT * FROM mood_logs", conn)
@@ -137,7 +208,8 @@ def add_mood_entry(emp_id, mood, remarks=""):
     conn.close()
 
 # -------------------------
-# Feedback functions
+# Feedback
+# -------------------------
 def fetch_feedback():
     conn = connect_db()
     df = pd.read_sql("SELECT * FROM feedback", conn)

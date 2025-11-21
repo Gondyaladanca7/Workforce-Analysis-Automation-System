@@ -17,20 +17,6 @@ class PDF(FPDF):
 def generate_summary_pdf(file_path, total_employees, active_employees, resigned_employees,
                          employee_df, gender_series=None, salary_series=None,
                          dept_series=None, feedback_df=None):
-    """
-    Generates a PDF report of workforce analytics including feedback.
-
-    Args:
-        file_path (str): Path to save the PDF.
-        total_employees (int)
-        active_employees (int)
-        resigned_employees (int)
-        employee_df (DataFrame): Employee details
-        gender_series (Series): Optional gender counts
-        salary_series (Series): Optional avg salary per department
-        dept_series (Series): Optional employee count per department
-        feedback_df (DataFrame): Optional feedback log
-    """
     pdf = PDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -38,7 +24,7 @@ def generate_summary_pdf(file_path, total_employees, active_employees, resigned_
     # -------------------------
     # Key Metrics
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "1️⃣ Key Metrics", ln=True)
+    pdf.cell(0, 10, "1. Key Metrics", ln=True)  # Removed emoji
     pdf.set_font("Arial", "", 11)
     pdf.cell(0, 8, f"Total Employees: {total_employees}", ln=True)
     pdf.cell(0, 8, f"Active Employees: {active_employees}", ln=True)
@@ -49,7 +35,7 @@ def generate_summary_pdf(file_path, total_employees, active_employees, resigned_
     # Department Distribution
     if dept_series is not None and not dept_series.empty:
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, "2️⃣ Department Distribution", ln=True)
+        pdf.cell(0, 10, "2. Department Distribution", ln=True)
         pdf.set_font("Arial", "", 11)
         for dept, count in dept_series.items():
             pdf.cell(0, 8, f"{dept}: {count} employees", ln=True)
@@ -59,7 +45,7 @@ def generate_summary_pdf(file_path, total_employees, active_employees, resigned_
     # Gender Ratio
     if gender_series is not None and not gender_series.empty:
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, "3️⃣ Gender Distribution", ln=True)
+        pdf.cell(0, 10, "3. Gender Distribution", ln=True)
         pdf.set_font("Arial", "", 11)
         for gender, count in gender_series.items():
             pdf.cell(0, 8, f"{gender}: {count}", ln=True)
@@ -69,7 +55,7 @@ def generate_summary_pdf(file_path, total_employees, active_employees, resigned_
     # Average Salary
     if salary_series is not None and not salary_series.empty:
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, "4️⃣ Average Salary by Department", ln=True)
+        pdf.cell(0, 10, "4. Average Salary by Department", ln=True)
         pdf.set_font("Arial", "", 11)
         for dept, salary in salary_series.items():
             pdf.cell(0, 8, f"{dept}: ₹{salary:.2f}", ln=True)
@@ -79,7 +65,7 @@ def generate_summary_pdf(file_path, total_employees, active_employees, resigned_
     # Feedback Summary
     if feedback_df is not None and not feedback_df.empty:
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, "5️⃣ Employee Feedback Summary", ln=True)
+        pdf.cell(0, 10, "5. Employee Feedback Summary", ln=True)
         pdf.set_font("Arial", "", 11)
         fb_summary = feedback_summary(feedback_df, employee_df)
         if fb_summary.empty:
@@ -89,9 +75,6 @@ def generate_summary_pdf(file_path, total_employees, active_employees, resigned_
                 pdf.cell(0, 8, f"{row['Employee']}: Avg Rating {row['Avg_Rating']:.2f} ({row['Feedback_Count']} feedbacks)", ln=True)
         pdf.ln(5)
 
-    # -------------------------
-    # Optional: Add more future analytics
     pdf.set_font("Arial", "I", 10)
     pdf.cell(0, 8, "Report generated automatically by Workforce Analytics System.", ln=True)
-
     pdf.output(file_path)
