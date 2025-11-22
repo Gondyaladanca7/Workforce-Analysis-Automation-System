@@ -2,94 +2,168 @@
 import streamlit as st
 import pandas as pd
 import datetime
+
+from utils.auth import require_login, show_role_badge, logout_user
 from utils import database as db
-import seaborn as sns
-import matplotlib.pyplot as plt
 
-sns.set_style("whitegrid")
+def show():
+    require_login()
+    show_role_badge()
+    logout_user()
 
-st.set_page_config(page_title="Tasks", page_icon="📝", layout="wide")
-st.title("📝 Task Management")
+    role = st.session_state.get("role", "Employee")
+    username = st.session_state.get("user", "unknown")
 
-# Fetch employee list
-try:
-    df = db.fetch_employees()
-except Exception:
-    df = pd.DataFrame(columns=["Emp_ID", "Name"])
+    st.title("🗂️ Task Management")
 
-# Assign Task (Admin/Manager)
-st.subheader("Assign Task")
-with st.form("assign_task_form", clear_on_submit=True):
-    task_name = st.text_input("Task Title")
+    # Load employees and tasks
+    try:
+        emp_df = db.fetch_employees()
+    except Exception as e:
+        st.error("Failed to load employees.")
+        st.exception(e)
+        emp_df = pd.DataFrame()
 
-    emp_list = []
-    if not df.empty:
-        emp_list = df["Emp_ID"].astype(str) + " - " + df["Name"]
-        emp_list = emp_list.tolist()
-    emp_choice = st.selectbox("Assign To", options=emp_list)
+    try:
+        tasks_df = db.fetch_tasks()
+    except Exception as e:
+        st.error("Failed to load tasks.")
+        st.exception(e)
+        tasks_df = pd.DataFrame()
 
-    emp_id_for_task = int(emp_choice.split(" - ")[0]) if emp_choice else None
-    due_date = st.date_input("Due Date", value=datetime.date.today())
-    remarks = st.text_area("Remarks (optional)")
-    submit_task = st.form_submit_button("Assign Task")
-
-    if submit_task:
-        if not task_name or emp_id_for_task is None:
-            st.warning("Task title and assignee are required.")
-        else:
-            try:
-                db.add_task({
-                    "task_name": task_name,
-                    "emp_id": emp_id_for_task,
-                    "assigned_by": st.session_state.get("user", "system"),
-                    "due_date": due_date.strftime("%Y-%m-%d"),
-                    "status": "Pending",
-                    "remarks": remarks or ""
-                })
-                st.success("Task assigned successfully.")
-                # trigger refresh
-                st.session_state["refresh_trigger"] = not st.session_state.get("refresh_trigger", False)
-            except Exception as e:
-                st.error("Failed to assign task.")
-                st.exception(e)
-
-# View Tasks
-st.subheader("All Tasks")
-try:
-    tasks_df = db.fetch_tasks()
-except Exception:
-    tasks_df = pd.DataFrame(columns=[
-        "task_id", "task_name", "emp_id", "assigned_by", "due_date",
-        "status", "remarks", "created_date"
-    ])
-
-if not tasks_df.empty:
-    # Ensure due_date parsed as dates
-    tasks_df["due_date_parsed"] = pd.to_datetime(tasks_df["due_date"], errors="coerce").dt.date
-    today = pd.Timestamp.today().date()
-    tasks_df["overdue"] = tasks_df["due_date_parsed"].apply(lambda d: d < today if pd.notna(d) else False)
-
-    # Merge employee names
-    emp_map = df.set_index("Emp_ID")["Name"].to_dict() if not df.empty else {}
-    tasks_df["Employee"] = tasks_df["emp_id"].map(emp_map).fillna(tasks_df["emp_id"].astype(str))
-
-    display_cols = ["task_id", "task_name", "Employee", "assigned_by", "due_date", "status", "remarks", "overdue"]
-    st.dataframe(tasks_df[display_cols], height=360)
-
-    # Task Analytics
-    st.subheader("Task Analytics")
-    if "status" in tasks_df.columns and not tasks_df["status"].isna().all():
-        status_counts = tasks_df["status"].value_counts()
-        fig, ax = plt.subplots(figsize=(5,3))
-        ax.pie(
-            status_counts.values,
-            labels=[f"{s} ({c})" for s,c in zip(status_counts.index, status_counts.values)],
-            startangle=90,
-            autopct='%1.0f%%'
+    # -----------------------
+    # Assign Task
+    # -----------------------
+    st.subheader("➕ Assign Task")
+    with st.form("assign_task", clear_on_submit=True):
+        task_title = st.text_input("Task title")
+        assignee = st.selectbox(
+            "Assign to",
+            (emp_df["Emp_ID"].astype(str) + " - " + emp_df["Name"]).tolist() if not emp_df.empty else []
         )
-        ax.axis("equal")
-        st.pyplot(fig)
+        due_date = st.date_input("Due date", value=datetime.date.today())
+        priority = st.selectbox("Priority", ["Low","Medium","High"])
+        remarks = st.text_area("Remarks")
+        submit = st.form_submit_button("Assign")
+        if submit:
+            if not task_title or not assignee:
+                st.error("Task title and assignee are required.")
+            else:
+                emp_id = int(assignee.split(" - ")[0])
+                try:
+                    db.add_task({
+                        "task_name": task_title.strip(),
+                        "emp_id": emp_id,
+                        "assigned_by": username,
+                        "due_date": due_date.strftime("%Y-%m-%d"),
+                        "priority": priority,
+                        "status": "Pending",
+                        "remarks": remarks or ""
+                    })
+                    st.success("Task assigned.")
+                    st.experimental_rerun()
+                except Exception as e:
+                    st.error("Failed to assign task.")
+                    st.exception(e)
+
+    st.markdown("---")
+
+    # -----------------------
+    # Search & Filter Tasks
+    # -----------------------
+    st.subheader("🔎 Search / Filter Tasks")
+    search_text = st.text_input("Search (title, assignee, remarks)").lower().strip()
+    filter_status = st.selectbox("Status Filter", ["All", "Pending", "In-Progress", "Completed"])
+    filter_priority = st.selectbox("Priority Filter", ["All", "Low", "Medium", "High"])
+
+    tasks_display = tasks_df.copy()
+    if not tasks_display.empty and emp_df.shape[0] > 0:
+        emp_map = emp_df.set_index("Emp_ID")["Name"].to_dict()
+        tasks_display["Employee"] = tasks_display["emp_id"].map(emp_map).fillna(tasks_display["emp_id"].astype(str))
+
+        if search_text:
+            mask = (
+                tasks_display["task_name"].str.lower().str.contains(search_text, na=False) |
+                tasks_display["Employee"].str.lower().str.contains(search_text, na=False) |
+                tasks_display["remarks"].str.lower().str.contains(search_text, na=False)
+            )
+            tasks_display = tasks_display[mask]
+
+        if filter_status != "All":
+            tasks_display = tasks_display[tasks_display["status"] == filter_status]
+
+        if filter_priority != "All":
+            tasks_display = tasks_display[tasks_display["priority"] == filter_priority]
+
+    st.dataframe(
+        tasks_display[["task_id","task_name","Employee","assigned_by","due_date","priority","status","remarks"]],
+        height=300
+    )
+
+    st.markdown("---")
+
+    # -----------------------
+    # Edit / Update / Delete Task
+    # -----------------------
+    if not tasks_display.empty:
+        st.subheader("✏️ Edit / Delete Task")
+        task_ids = tasks_display["task_id"].astype(str).tolist()
+        sel_task = st.selectbox("Select Task ID", task_ids)
+
+        if sel_task:
+            task_row = tasks_display[tasks_display["task_id"] == int(sel_task)].iloc[0].to_dict()
+            with st.form("edit_task"):
+                e_title = st.text_input("Task Title", value=task_row.get("task_name",""))
+                e_assignee = st.selectbox(
+                    "Assign To",
+                    (emp_df["Emp_ID"].astype(str) + " - " + emp_df["Name"]).tolist(),
+                    index=0
+                )
+                e_due = st.date_input(
+                    "Due Date",
+                    value=pd.to_datetime(task_row.get("due_date", datetime.date.today())).date()
+                )
+                e_priority = st.selectbox("Priority", ["Low","Medium","High"], index=["Low","Medium","High"].index(task_row.get("priority","Low")))
+                e_status = st.selectbox("Status", ["Pending","In-Progress","Completed"], index=["Pending","In-Progress","Completed"].index(task_row.get("status","Pending")))
+                e_remarks = st.text_area("Remarks", value=task_row.get("remarks",""))
+
+                update_btn = st.form_submit_button("Save Changes")
+                delete_btn = st.form_submit_button("Delete Task")
+
+                if update_btn:
+                    try:
+                        emp_id_new = int(e_assignee.split(" - ")[0])
+                        db.update_task(int(sel_task), {
+                            "task_name": e_title.strip(),
+                            "emp_id": emp_id_new,
+                            "due_date": e_due.strftime("%Y-%m-%d"),
+                            "priority": e_priority,
+                            "status": e_status,
+                            "remarks": e_remarks
+                        })
+                        st.success("Task updated successfully.")
+                        st.experimental_rerun()
+                    except Exception as e:
+                        st.error("Failed to update task.")
+                        st.exception(e)
+
+                if delete_btn:
+                    try:
+                        db.delete_task(int(sel_task))
+                        st.success("Task deleted successfully.")
+                        st.experimental_rerun()
+                    except Exception as e:
+                        st.error("Failed to delete task.")
+                        st.exception(e)
+
+    st.markdown("---")
+
+    # -----------------------
+    # Task Completion Analytics
+    # -----------------------
+    st.subheader("📊 Task Completion Analytics")
+    if not tasks_df.empty:
+        status_counts = tasks_df["status"].value_counts()
+        st.bar_chart(status_counts)
     else:
-        st.info("No task status data available for analytics.")
-else:
-    st.info("No tasks found.")
+        st.info("No task data to display analytics.")

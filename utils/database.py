@@ -8,6 +8,9 @@ from typing import Optional, Dict, Any
 
 DB_PATH = "data/workforce.db"
 
+# -------------------------
+# Utility Functions
+# -------------------------
 def ensure_data_folder():
     if not os.path.exists("data"):
         os.makedirs("data")
@@ -20,11 +23,14 @@ def connect_db():
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
+# -------------------------
+# Initialize Tables
+# -------------------------
 def initialize_all_tables():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # users table
+    # Users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +40,7 @@ def initialize_all_tables():
     )
     """)
 
-    # employees
+    # Employees table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS employees (
         Emp_ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,7 +58,7 @@ def initialize_all_tables():
     )
     """)
 
-    # tasks
+    # Tasks table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks (
         task_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +72,7 @@ def initialize_all_tables():
     )
     """)
 
-    # mood logs
+    # Mood logs table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS mood_logs (
         mood_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +83,7 @@ def initialize_all_tables():
     )
     """)
 
-    # feedback
+    # Feedback table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS feedback (
         feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,7 +97,9 @@ def initialize_all_tables():
 
     conn.commit()
 
-    # seed default users
+    # -------------------------
+    # Seed Default Users
+    # -------------------------
     defaults = [
         ("admin", "admin123", "Admin"),
         ("manager", "manager123", "Manager"),
@@ -106,7 +114,9 @@ def initialize_all_tables():
             )
     conn.commit()
 
-    # seed small employees if empty
+    # -------------------------
+    # Seed Sample Employees
+    # -------------------------
     cursor.execute("SELECT COUNT(*) FROM employees")
     if cursor.fetchone()[0] == 0:
         sample_employees = [
@@ -139,8 +149,10 @@ def get_user_by_username(username: str) -> Optional[Dict[str, Any]]:
 def add_user(username: str, password: str, role: str = "Employee"):
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("INSERT OR REPLACE INTO users (username, password, role) VALUES (?, ?, ?)",
-                   (username, hash_password(password), role))
+    cursor.execute(
+        "INSERT OR REPLACE INTO users (username, password, role) VALUES (?, ?, ?)",
+        (username, hash_password(password), role)
+    )
     conn.commit()
     conn.close()
 
@@ -159,17 +171,22 @@ def add_employee(emp_dict: Dict[str, Any]):
     conn = connect_db()
     cursor = conn.cursor()
     if emp_dict.get("Emp_ID") is not None:
-        # allow explicit ID insert/replace
         columns = ", ".join(emp_dict.keys())
         placeholders = ", ".join("?" for _ in emp_dict)
-        sql = f"INSERT OR REPLACE INTO employees ({columns}) VALUES ({placeholders})"
-        cursor.execute(sql, tuple(emp_dict.values()))
+        cursor.execute(f"INSERT OR REPLACE INTO employees ({columns}) VALUES ({placeholders})", tuple(emp_dict.values()))
     else:
         d = {k: v for k, v in emp_dict.items() if k != "Emp_ID"}
         columns = ", ".join(d.keys())
         placeholders = ", ".join("?" for _ in d)
-        sql = f"INSERT INTO employees ({columns}) VALUES ({placeholders})"
-        cursor.execute(sql, tuple(d.values()))
+        cursor.execute(f"INSERT INTO employees ({columns}) VALUES ({placeholders})", tuple(d.values()))
+    conn.commit()
+    conn.close()
+
+def update_employee(emp_id: int, updates: Dict[str, Any]):
+    conn = connect_db()
+    cursor = conn.cursor()
+    set_clause = ", ".join([f"{k}=?" for k in updates.keys()])
+    cursor.execute(f"UPDATE employees SET {set_clause} WHERE Emp_ID=?", (*updates.values(), emp_id))
     conn.commit()
     conn.close()
 
@@ -215,8 +232,23 @@ def add_task(task: Optional[Dict[str, Any]] = None, **kwargs):
     conn.commit()
     conn.close()
 
+def update_task(task_id: int, updates: Dict[str, Any]):
+    conn = connect_db()
+    cursor = conn.cursor()
+    set_clause = ", ".join([f"{k}=?" for k in updates.keys()])
+    cursor.execute(f"UPDATE tasks SET {set_clause} WHERE task_id=?", (*updates.values(), task_id))
+    conn.commit()
+    conn.close()
+
+def delete_task(task_id: int):
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tasks WHERE task_id=?", (task_id,))
+    conn.commit()
+    conn.close()
+
 # -------------------------
-# Mood logs
+# Mood Logs
 # -------------------------
 def fetch_mood_logs() -> pd.DataFrame:
     conn = connect_db()
