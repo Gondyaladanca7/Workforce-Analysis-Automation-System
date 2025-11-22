@@ -8,9 +8,6 @@ from typing import Optional, Dict, Any
 
 DB_PATH = "data/workforce.db"
 
-# -------------------------
-# Helpers
-# -------------------------
 def ensure_data_folder():
     if not os.path.exists("data"):
         os.makedirs("data")
@@ -23,14 +20,11 @@ def connect_db():
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
-# -------------------------
-# Initialize all tables and seed default users / sample rows
-# -------------------------
 def initialize_all_tables():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Users table
+    # users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +34,7 @@ def initialize_all_tables():
     )
     """)
 
-    # Employees table
+    # employees
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS employees (
         Emp_ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +52,7 @@ def initialize_all_tables():
     )
     """)
 
-    # Tasks table
+    # tasks
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks (
         task_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,7 +66,7 @@ def initialize_all_tables():
     )
     """)
 
-    # Mood logs table
+    # mood logs
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS mood_logs (
         mood_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,7 +77,7 @@ def initialize_all_tables():
     )
     """)
 
-    # Feedback table
+    # feedback
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS feedback (
         feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,7 +91,7 @@ def initialize_all_tables():
 
     conn.commit()
 
-    # Default users
+    # seed default users
     defaults = [
         ("admin", "admin123", "Admin"),
         ("manager", "manager123", "Manager"),
@@ -112,7 +106,7 @@ def initialize_all_tables():
             )
     conn.commit()
 
-    # Sample employees if empty
+    # seed small employees if empty
     cursor.execute("SELECT COUNT(*) FROM employees")
     if cursor.fetchone()[0] == 0:
         sample_employees = [
@@ -165,6 +159,7 @@ def add_employee(emp_dict: Dict[str, Any]):
     conn = connect_db()
     cursor = conn.cursor()
     if emp_dict.get("Emp_ID") is not None:
+        # allow explicit ID insert/replace
         columns = ", ".join(emp_dict.keys())
         placeholders = ", ".join("?" for _ in emp_dict)
         sql = f"INSERT OR REPLACE INTO employees ({columns}) VALUES ({placeholders})"

@@ -32,12 +32,12 @@ def login(username: str, password: str):
         if not emp_row.empty:
             st.session_state["my_emp_id"] = int(emp_row.iloc[0]["Emp_ID"])
         else:
-            # keep previous mapping if set, else None
             st.session_state.setdefault("my_emp_id", None)
     except Exception:
         st.session_state.setdefault("my_emp_id", None)
 
     return True, "Login successful"
+
 
 # -------------------------
 # Require login (used at top of pages)
@@ -51,22 +51,24 @@ def require_login():
             success, msg = login(username, password)
             if success:
                 st.success(msg)
-                # rerun to load page with session set
-                st.rerun()
+                # no rerun needed; session_state now has login info
             else:
                 st.error(msg)
-        st.stop()
+        st.stop()  # stop rendering page until login
+
 
 # -------------------------
 # Logout
 # -------------------------
 def logout_user():
-    # put logout on sidebar to be consistent with app layout
+    # put logout on sidebar
     if st.sidebar.button("Logout"):
-        for key in ["logged_in", "user", "role", "user_id", "my_emp_id"]:
-            if key in st.session_state:
-                del st.session_state[key]
-        st.rerun()
+        keys = ["logged_in", "user", "role", "user_id", "my_emp_id"]
+        for k in keys:
+            if k in st.session_state:
+                del st.session_state[k]
+        st.info("Logged out successfully.")
+        st.experimental_set_query_params()  # resets query params, avoids rerun
 
 # -------------------------
 # Show role badge
