@@ -7,6 +7,9 @@ from utils.auth import require_login, show_role_badge, logout_user
 from utils import database as db
 
 def show():
+    # -----------------------
+    # Login & Role Check
+    # -----------------------
     require_login()
     show_role_badge()
     logout_user()
@@ -16,7 +19,9 @@ def show():
 
     st.title("🗂️ Task Management")
 
-    # Load employees and tasks
+    # -----------------------
+    # Load Data
+    # -----------------------
     try:
         emp_df = db.fetch_employees()
     except Exception as e:
@@ -35,36 +40,40 @@ def show():
     # Assign Task
     # -----------------------
     st.subheader("➕ Assign Task")
-    with st.form("assign_task", clear_on_submit=True):
-        task_title = st.text_input("Task title")
-        assignee = st.selectbox(
-            "Assign to",
-            (emp_df["Emp_ID"].astype(str) + " - " + emp_df["Name"]).tolist() if not emp_df.empty else []
-        )
-        due_date = st.date_input("Due date", value=datetime.date.today())
-        priority = st.selectbox("Priority", ["Low","Medium","High"])
-        remarks = st.text_area("Remarks")
-        submit = st.form_submit_button("Assign")
-        if submit:
-            if not task_title or not assignee:
-                st.error("Task title and assignee are required.")
-            else:
-                emp_id = int(assignee.split(" - ")[0])
-                try:
-                    db.add_task({
-                        "task_name": task_title.strip(),
-                        "emp_id": emp_id,
-                        "assigned_by": username,
-                        "due_date": due_date.strftime("%Y-%m-%d"),
-                        "priority": priority,
-                        "status": "Pending",
-                        "remarks": remarks or ""
-                    })
-                    st.success("Task assigned.")
-                    st.experimental_rerun()
-                except Exception as e:
-                    st.error("Failed to assign task.")
-                    st.exception(e)
+    if not emp_df.empty:
+        with st.form("assign_task", clear_on_submit=True):
+            task_title = st.text_input("Task Title")
+            assignee = st.selectbox(
+                "Assign to",
+                (emp_df["Emp_ID"].astype(str) + " - " + emp_df["Name"]).tolist()
+            )
+            due_date = st.date_input("Due Date", value=datetime.date.today())
+            priority = st.selectbox("Priority", ["Low","Medium","High"])
+            remarks = st.text_area("Remarks")
+            submit = st.form_submit_button("Assign")
+
+            if submit:
+                if not task_title.strip():
+                    st.error("Task title is required.")
+                else:
+                    emp_id = int(assignee.split(" - ")[0])
+                    try:
+                        db.add_task({
+                            "task_name": task_title.strip(),
+                            "emp_id": emp_id,
+                            "assigned_by": username,
+                            "due_date": due_date.strftime("%Y-%m-%d"),
+                            "priority": priority,
+                            "status": "Pending",
+                            "remarks": remarks or ""
+                        })
+                        st.success("Task assigned successfully.")
+                        st.experimental_rerun()
+                    except Exception as e:
+                        st.error("Failed to assign task.")
+                        st.exception(e)
+    else:
+        st.info("No employees available to assign tasks.")
 
     st.markdown("---")
 

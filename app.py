@@ -1,12 +1,11 @@
 # app.py
 """
 Workforce Analytics & Employee Management System
-- Role-based login
-- Employee CRUD
-- Mood tracking
-- Task management
-- Workforce analytics dashboards
-- PDF export system
+- Professional single-page dashboard
+- Role-based login (Admin, Manager, HR, Employee)
+- Employee CRUD & CSV import
+- Mood tracking, Task management, Feedback
+- Workforce analytics dashboards & PDF export
 """
 
 import streamlit as st
@@ -25,17 +24,17 @@ from utils.pdf_export import generate_summary_pdf
 st.set_page_config(page_title="Workforce Analytics System", page_icon="👩‍💼", layout="wide")
 
 # -------------------------
-# Initialize DB
+# Initialize Database
 # -------------------------
 try:
-    db.initialize_all_tables()
+    db.create_tables()  # Use create_tables() instead of initialize_all_tables
 except Exception as e:
     st.error("❌ Failed to initialize database.")
     st.exception(e)
     st.stop()
 
 # -------------------------
-# Login
+# Login / Role Badge / Logout
 # -------------------------
 require_login()
 show_role_badge()
@@ -111,92 +110,99 @@ if df.empty:
     st.success("✔ Realistic employees generated.")
 
 # -------------------------
-# Sidebar Filters
+# Role-Based Sidebar Tabs
 # -------------------------
-st.sidebar.header("Filters")
-st.sidebar.markdown(f"Logged in as: **{username}** ({role})")
+tabs = []
+if role in ["Admin", "Manager", "HR"]:
+    tabs = ["Employees", "Tasks", "Mood Tracker", "Feedback", "Analytics"]
+elif role == "Employee":
+    tabs = ["Tasks", "Mood Tracker", "Feedback", "Analytics"]
 
-def safe_opts(df_local, col):
-    return ["All"] + sorted(df_local[col].dropna().unique().tolist()) if col in df_local.columns else ["All"]
-
-f_dept   = st.sidebar.selectbox("Department", safe_opts(df, "Department"))
-f_status = st.sidebar.selectbox("Status", safe_opts(df, "Status"))
-f_gender = st.sidebar.selectbox("Gender", ["All", "Male", "Female"])
-f_role   = st.sidebar.selectbox("Role", safe_opts(df, "Role"))
+tab = st.sidebar.radio("Select Module", tabs)
 
 # -------------------------
-# CSV Upload
+# Employees Module
 # -------------------------
-if role in ("Admin", "Manager"):
-    st.sidebar.header("📁 Import CSV")
-    upload = st.sidebar.file_uploader("Upload CSV", type=["csv"])
+if tab == "Employees" and role in ["Admin", "Manager", "HR"]:
+    st.header("👩‍💼 Employee Management")
+
+    # Filters
+    st.sidebar.header("Filters")
+    f_dept   = st.sidebar.selectbox("Department", ["All"] + sorted(df["Department"].dropna().unique()))
+    f_status = st.sidebar.selectbox("Status", ["All"] + sorted(df["Status"].dropna().unique()))
+    f_gender = st.sidebar.selectbox("Gender", ["All", "Male", "Female"])
+    f_role   = st.sidebar.selectbox("Role", ["All"] + sorted(df["Role"].dropna().unique()))
+
+    filtered = df.copy()
+    if f_dept != "All": filtered = filtered[filtered["Department"] == f_dept]
+    if f_status != "All": filtered = filtered[filtered["Status"] == f_status]
+    if f_gender != "All": filtered = filtered[filtered["Gender"] == f_gender]
+    if f_role != "All": filtered = filtered[filtered["Role"] == f_role]
+
+    search = st.text_input("Search by Name / Role / Skills / ID").lower().strip()
+    disp = filtered.copy()
+    if search:
+        mask = (
+            disp["Name"].astype(str).str.lower().str.contains(search, na=False) |
+            disp["Role"].astype(str).str.lower().str.contains(search, na=False) |
+            disp["Skills"].astype(str).str.lower().str.contains(search, na=False) |
+            disp["Emp_ID"].astype(str).str.contains(search, na=False)
+        )
+        disp = disp[mask]
+
+    st.dataframe(disp[["Emp_ID","Name","Department","Role","Join_Date","Status"]], height=400)
+
+    # CSV Upload
+    st.subheader("📁 Import Employees CSV")
+    upload = st.file_uploader("Upload CSV", type=["csv"])
     if upload:
         try:
             df_u = pd.read_csv(upload)
-            required = ["Name","Age","Gender","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"]
-            for col in required:
+            required_cols = ["Name","Age","Gender","Department","Role","Skills","Join_Date","Resign_Date","Status","Salary","Location"]
+            for col in required_cols:
                 if col not in df_u.columns:
                     df_u[col] = ""
             for _, row in df_u.iterrows():
                 db.add_employee(row.to_dict())
             st.success("CSV imported successfully!")
-            st.session_state["refresh_flag"] = random.random()
         except Exception as e:
             st.error("CSV import failed.")
             st.exception(e)
 
 # -------------------------
-# Apply Filters
+# Tasks Module
 # -------------------------
-filtered = df.copy()
-if f_dept != "All":   filtered = filtered[filtered["Department"] == f_dept]
-if f_status != "All": filtered = filtered[filtered["Status"] == f_status]
-if f_gender != "All": filtered = filtered[filtered["Gender"] == f_gender]
-if f_role != "All":   filtered = filtered[filtered["Role"] == f_role]
+elif tab == "Tasks":
+    from pages import tasks as task
+    task.show()
 
 # -------------------------
-# Employee Records Table
+# Mood Tracker Module
 # -------------------------
-st.title("👩‍💼 Workforce Analytics System")
-st.header("1️⃣ Employee Records")
-
-search = st.text_input("Search (Name / Role / Skills / ID)").lower().strip()
-disp = filtered.copy()
-if search:
-    cond = (
-        disp["Name"].astype(str).str.lower().str.contains(search, na=False) |
-        disp["Role"].astype(str).str.lower().str.contains(search, na=False) |
-        disp["Skills"].astype(str).str.lower().str.contains(search, na=False) |
-        disp["Emp_ID"].astype(str).str.contains(search, na=False)
-    )
-    disp = disp[cond]
-
-sort_col = st.selectbox("Sort by", disp.columns.tolist(), index=0)
-sort_order = st.radio("Order", ["Ascending", "Descending"], horizontal=True) == "Ascending"
-try: disp = disp.sort_values(sort_col, ascending=sort_order)
-except: pass
-
-st.dataframe(disp[["Emp_ID","Name","Department","Role","Join_Date","Status"]], height=420)
-st.markdown("---")
+elif tab == "Mood Tracker":
+    from pages import mood_tracker as mood
+    mood.show()
 
 # -------------------------
-# Summary Metrics
+# Feedback Module
 # -------------------------
-st.header("2️⃣ Workforce Summary")
-summary = get_summary(filtered)
-c1, c2, c3 = st.columns(3)
-c1.metric("Total", summary["total"])
-c2.metric("Active", summary["active"])
-c3.metric("Resigned", summary["resigned"])
-st.markdown("---")
+elif tab == "Feedback":
+    from pages import feedback as fb
+    fb.show()
 
 # -------------------------
-# Charts
+# Analytics Module
 # -------------------------
-# Department
-st.header("3️⃣ Department Distribution")
-dept_fig = None
-if not filtered.empty:
+elif tab == "Analytics":
+    st.header("📊 Workforce Analytics & Summary")
+    filtered = df.copy()
+    summary = get_summary(filtered)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Total Employees", summary["total"])
+    c2.metric("Active", summary["active"])
+    c3.metric("Resigned", summary["resigned"])
+
+    # Department Distribution
     dept_counts = department_distribution(filtered)
     fig, ax = plt.subplots(figsize=(8,4))
     ax.bar(dept_counts.index, dept_counts.values)
@@ -205,64 +211,47 @@ if not filtered.empty:
     ax.set_title("Employees by Department")
     plt.xticks(rotation=30)
     st.pyplot(fig)
-    dept_fig = fig
-else: st.info("No data available.")
-st.markdown("---")
 
-# Gender
-st.header("4️⃣ Gender Ratio")
-gender_fig = None
-if not filtered.empty:
+    # Gender Ratio
     g = gender_ratio(filtered)
-    fig, ax = plt.subplots(figsize=(5,5))
-    ax.pie(g.values, labels=g.index, autopct="%1.1f%%")
-    ax.set_title("Gender Split")
-    st.pyplot(fig)
-    gender_fig = fig
-else: st.info("No data available.")
-st.markdown("---")
+    fig2, ax2 = plt.subplots(figsize=(5,5))
+    ax2.pie(g.values, labels=g.index, autopct="%1.1f%%")
+    ax2.set_title("Gender Split")
+    st.pyplot(fig2)
 
-# Salary
-st.header("5️⃣ Average Salary by Department")
-salary_fig = None
-if not filtered.empty:
+    # Average Salary
     sal = average_salary_by_dept(filtered)
-    fig, ax = plt.subplots(figsize=(8,4))
-    ax.bar(sal.index, sal.values)
-    ax.set_xlabel("Department")
-    ax.set_ylabel("Average Salary")
-    ax.set_title("Department-wise Salary")
+    fig3, ax3 = plt.subplots(figsize=(8,4))
+    ax3.bar(sal.index, sal.values)
+    ax3.set_xlabel("Department")
+    ax3.set_ylabel("Average Salary")
+    ax3.set_title("Department-wise Salary")
     plt.xticks(rotation=30)
-    st.pyplot(fig)
-    salary_fig = fig
-else: st.info("No data available.")
-st.markdown("---")
+    st.pyplot(fig3)
 
-# -------------------------
-# PDF Export
-# -------------------------
-st.subheader("📄 Download Workforce PDF")
-pdf_buffer = io.BytesIO()
-if st.button("Generate PDF"):
-    try:
-        generate_summary_pdf(
-            buffer=pdf_buffer,
-            total=summary["total"],
-            active=summary["active"],
-            resigned=summary["resigned"],
-            df=filtered,
-            mood_df=db.fetch_mood_logs(),
-            dept_fig=dept_fig,
-            gender_fig=gender_fig,
-            salary_fig=salary_fig,
-            title="Workforce Summary Report"
-        )
-        st.download_button(
-            label="Download PDF",
-            data=pdf_buffer,
-            file_name="workforce_summary_report.pdf",
-            mime="application/pdf"
-        )
-    except Exception as e:
-        st.error("Failed to generate PDF.")
-        st.exception(e)
+    # PDF Export
+    st.subheader("📄 Export PDF Summary")
+    pdf_buffer = io.BytesIO()
+    if st.button("Generate PDF"):
+        try:
+            generate_summary_pdf(
+                buffer=pdf_buffer,
+                total=summary["total"],
+                active=summary["active"],
+                resigned=summary["resigned"],
+                df=filtered,
+                mood_df=db.fetch_mood_logs(),
+                dept_fig=fig,
+                gender_fig=fig2,
+                salary_fig=fig3,
+                title="Workforce Summary Report"
+            )
+            st.download_button(
+                label="Download PDF",
+                data=pdf_buffer,
+                file_name="workforce_summary_report.pdf",
+                mime="application/pdf"
+            )
+        except Exception as e:
+            st.error("Failed to generate PDF.")
+            st.exception(e)
